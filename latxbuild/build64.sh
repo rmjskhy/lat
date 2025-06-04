@@ -67,7 +67,7 @@ make_cmd() {
         elif [ "$opt_level" = "1" ] ; then
             ../configure --target-list=x86_64-linux-user --enable-latx \
                 --disable-debug-info --optimize-O1 --extra-ldflags=-ldl --enable-kzt \
-                --disable-docs ${low_mem_mode}
+                --disable-docs --disable-werror ${low_mem_mode}
         elif [ "$opt_level" = "2" ] ; then
             ../configure --target-list=x86_64-linux-user --enable-latx \
                 --disable-debug-info --optimize-O2 --static --extra-ldflags=-ldl \

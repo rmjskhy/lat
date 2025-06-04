@@ -370,12 +370,17 @@ static bool flag_reduction_pass1(void *tb)
     time_t ti = profile_getclock();
 #endif
     TranslationBlock *ptb = (TranslationBlock *)tb;
-    IR1_INST *pir1 = dt_X86_INS_INVALID;
+    IR1_INST *pir1 = NULL;
 
     /* scanning if this insts will def ALL_EFLAGS */
     for (int i = tb_ir1_num(ptb) - 1; i >= 0; --i) {
         pir1 = tb_ir1_inst(ptb, i);
-        const IR1_EFLAG_USEDEF *usedef = ir1_opcode_to_eflag_usedef(pir1);
+        IR1_EFLAG_USEDEF *usedef = NULL;
+        if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+            usedef = ir1_opcode_to_eflag_usedef(pir1);
+        } else {
+            usedef = ir1_opcode_to_eflag_usedef_bd(pir1);
+        }
 
         /*
          * NOTE: if you find some insts will use ALL_EFLAGS
@@ -518,7 +523,14 @@ uint8 flag_reduction_check(TranslationBlock *tb)
         TCGProfile *prof = &tcg_ctx->prof;
         time_t ti = profile_getclock();
 #endif
-        uint8 pending_use = pending_use_of_succ(tb, 1, MAX_DEPTH);
+        TranslationBlock *ptb = (TranslationBlock *)tb;
+        IR1_INST *pir1 = tb_ir1_inst_last(ptb);
+        uint8 pending_use;
+        if (pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+            pending_use = pending_use_of_succ(tb, 1, MAX_DEPTH);
+        } else {
+            pending_use = pending_use_of_succ_bd(tb, 1, MAX_DEPTH);
+        }
 #ifdef CONFIG_LATX_PROFILER
         qatomic_add(&prof->flag_rdtn_search, profile_getclock() - ti);
 #endif

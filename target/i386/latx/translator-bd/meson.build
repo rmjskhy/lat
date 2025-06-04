@@ -1,0 +1,20 @@
+i386_ss.add(when: 'CONFIG_LATX', if_true: files(
+  'mem-interface-bd.c',
+  'tr-adx-bd.c',
+  'tr-arith-bd.c',
+  'tr-bmi-bd.c',
+  'tr-btx-bd.c',
+  'tr-eflag-bd.c',
+  'tr-eflag-process-bd.c',
+  'tr-farith-bd.c',
+  'tr-fcmovcc-bd.c',
+  'tr-fctrl-bd.c',
+  'tr-fldst-bd.c',
+  'tr-lock-bd.c',
+  'tr-misc-bd.c',
+  'tr-opnd-process-bd.c',
+  'tr-pattern-bd.c',
+  'tr-softfpu-bd.c',
+  'translate-bd.c',
+  
+))

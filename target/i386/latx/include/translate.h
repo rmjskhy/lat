@@ -4,6 +4,7 @@
 #include "common.h"
 #include "env.h"
 #include "ir1.h"
+#include "ir1-bd.h"
 #include "ir2.h"
 #include "la-append.h"
 #include "ir2-relocate.h"

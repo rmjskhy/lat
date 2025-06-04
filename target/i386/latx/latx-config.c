@@ -2,6 +2,7 @@
 #include "common.h"
 #include "diStorm/distorm.h"
 #include "ir1.h"
+#include "ir1-bd.h"
 #include "ir2.h"
 #include "lsenv.h"
 #include "reg-alloc.h"
@@ -44,7 +45,10 @@ void target_disasm(struct TranslationBlock *tb, int max_insns)
     lsenv->tr_data->curr_ir1_inst = NULL;
 #if defined(CONFIG_LATX_FLAG_REDUCTION) && \
     defined(CONFIG_LATX_FLAG_REDUCTION_EXTEND)
-    tb->_tb_type = get_etb_type(ir1_list + ir1_num - 1);
+    if ((ir1_list + ir1_num - 1).decode_engine == OPT_DECODE_BY_CAPSTONE)
+        tb->_tb_type = get_etb_type(ir1_list + ir1_num - 1);
+    else
+        tb->_tb_type = get_etb_type_bd(ir1_list + ir1_num - 1);
 
     if (option_flag_reduction) {
         tb_add_succ(etb, 2);

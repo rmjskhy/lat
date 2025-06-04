@@ -18,6 +18,7 @@
 #include "latx-disassemble-trace.h"
 #include "common.h"
 #include "reg-map.h"
+#include "latx-disasm.h"
 
 /* Mark the CS_MODE is i386 or X64 */
 #ifndef TARGET_X86_64
@@ -140,6 +141,8 @@ typedef struct IR1_INST {
         struct IR1_INST * next; /* index of IR1 list */
     } instptn;
 #endif
+    uint8_t decode_engine;
+    uint64_t address;
 } IR1_INST;
 
 extern IR1_OPND al_ir1_opnd;

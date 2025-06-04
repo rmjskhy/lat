@@ -718,6 +718,13 @@ void imm_cache_print_ir1(IR1_INST *pir1)
 #endif
 }
 
+void imm_cache_print_ir1_bd(IR1_INST *pir1)
+{
+#ifdef LATX_DISASSEMBLE_TRACE_DEBUG
+    imm_log("IR1: %s\t%s\n", ((INSTRUX *)(pir1->info))->Mnemonic, ir1_get_op_str_bd(pir1));
+#endif
+}
+
 void imm_cache_print_tb_ir1(TranslationBlock *tb)
 {
 #ifdef LATX_DISASSEMBLE_TRACE_DEBUG
@@ -725,6 +732,18 @@ void imm_cache_print_tb_ir1(TranslationBlock *tb)
     for (int i = 0; i < tb->icount; ++i) {
         imm_log("IR1[%d]\t: %s\t%s\n", i, pir1->info->mnemonic,
                 pir1->info->op_str);
+        pir1++;
+    }
+#endif
+}
+
+void imm_cache_print_tb_ir1_bd(TranslationBlock *tb)
+{
+#ifdef LATX_DISASSEMBLE_TRACE_DEBUG
+    IR1_INST *pir1 = tb_ir1_inst(tb, 0);
+    for (int i = 0; i < tb->icount; ++i) {
+        imm_log("IR1[%d]\t: %s\t%s\n", i, ((INSTRUX *)(pir1->info))->Mnemonic,
+                ((INSTRUX *)(pir1->info))->OpCodeBytes);
         pir1++;
     }
 #endif

@@ -398,121 +398,121 @@ static bool tu_split_tb(TranslationBlock *pre_tb, TranslationBlock *tb)
     return spilt_success;
 }
 
-static inline void get_tu_queue(CPUState *cpu,
-		 target_ulong cs_base, uint32_t flags,
-		 int cflags, int max_insns)
-{
-    ADDRX ir1_next_pc, ir1_target_pc;
-    TranslationBlock** tb_list = tu_data->tb_list;
-    uint32_t *tb_num_in_tu = &tu_data->tb_num;
-    TranslationBlock *next_tb, *target_tb, *tb;
-    for (int i = 0; i <  *tb_num_in_tu && *tb_num_in_tu < MAX_TB_IN_TU; i++) {
-        tb = tb_list[i];
-        ir1_next_pc = tb->s_data->next_pc;
-        ir1_target_pc = tb->s_data->target_pc;
-        switch (tb->s_data->last_ir1_type) {
-        case IR1_TYPE_BRANCH:
-            /* Jcc next tb should be translated without checking */
-            lsassert(ir1_next_pc);
-            if (get_page(tb->pc) == get_page(ir1_next_pc)) {
-                next_tb = tu_tree_lookup(ir1_next_pc);
-                if (!next_tb) {
-                    next_tb = tb_htable_lookup(cpu,
-                        ir1_next_pc, cs_base, flags, cflags);
-                }
-                if (!next_tb) {
-                    next_tb = tb_create(cpu, ir1_next_pc, cs_base, flags,
-                                   cflags, max_insns, 0, TU_TB_START_NORMAL);
-                    tu_push_back(next_tb);
-                }
-                if (next_tb && next_tb->tc.ptr != NULL) {
-                    tb->tu_jmp[TU_TB_INDEX_NEXT] = 0;
-                }
-                tb->s_data->next_tb[TU_TB_INDEX_NEXT] = next_tb;
-            } else {
-                tb->s_data->next_tb[TU_TB_INDEX_NEXT] = NULL;
-            }
-            if (tb->tu_jmp[TU_TB_INDEX_NEXT] == 0) {
-                lsassert(tb->s_data->next_tb[TU_TB_INDEX_NEXT]);
-            }
+// static inline void get_tu_queue(CPUState *cpu,
+// 		 target_ulong cs_base, uint32_t flags,
+// 		 int cflags, int max_insns)
+// {
+//     ADDRX ir1_next_pc, ir1_target_pc;
+//     TranslationBlock** tb_list = tu_data->tb_list;
+//     uint32_t *tb_num_in_tu = &tu_data->tb_num;
+//     TranslationBlock *next_tb, *target_tb, *tb;
+//     for (int i = 0; i <  *tb_num_in_tu && *tb_num_in_tu < MAX_TB_IN_TU; i++) {
+//         tb = tb_list[i];
+//         ir1_next_pc = tb->s_data->next_pc;
+//         ir1_target_pc = tb->s_data->target_pc;
+//         switch (tb->s_data->last_ir1_type) {
+//         case IR1_TYPE_BRANCH:
+//             /* Jcc next tb should be translated without checking */
+//             lsassert(ir1_next_pc);
+//             if (get_page(tb->pc) == get_page(ir1_next_pc)) {
+//                 next_tb = tu_tree_lookup(ir1_next_pc);
+//                 if (!next_tb) {
+//                     next_tb = tb_htable_lookup(cpu,
+//                         ir1_next_pc, cs_base, flags, cflags);
+//                 }
+//                 if (!next_tb) {
+//                     next_tb = tb_create(cpu, ir1_next_pc, cs_base, flags,
+//                                    cflags, max_insns, 0, TU_TB_START_NORMAL);
+//                     tu_push_back(next_tb);
+//                 }
+//                 if (next_tb && next_tb->tc.ptr != NULL) {
+//                     tb->tu_jmp[TU_TB_INDEX_NEXT] = 0;
+//                 }
+//                 tb->s_data->next_tb[TU_TB_INDEX_NEXT] = next_tb;
+//             } else {
+//                 tb->s_data->next_tb[TU_TB_INDEX_NEXT] = NULL;
+//             }
+//             if (tb->tu_jmp[TU_TB_INDEX_NEXT] == 0) {
+//                 lsassert(tb->s_data->next_tb[TU_TB_INDEX_NEXT]);
+//             }
 
-            lsassert(ir1_target_pc);
-            /* Jcc target tb should not be translated if the distance is too far */
-            if (get_page(tb->pc) == get_page(ir1_target_pc)) {
-                target_tb = tu_tree_lookup(ir1_target_pc);
-                if (!target_tb) {
-                    target_tb = tb_htable_lookup(cpu,
-                        ir1_target_pc, cs_base, flags, cflags);
-                }
-                if (!target_tb) {
-                    target_tb = tb_create(cpu, ir1_target_pc, cs_base, flags,
-                                     cflags, max_insns, 0, TU_TB_START_JMP);
-                    tu_push_back(target_tb);
-                }
-                if (target_tb && target_tb->tc.ptr != NULL) {
-                    tb->tu_jmp[TU_TB_INDEX_TARGET] = 0;
-                }
-                tb->s_data->next_tb[TU_TB_INDEX_TARGET] = target_tb;
-            } else {
-                tb->s_data->next_tb[TU_TB_INDEX_TARGET] = NULL;
-            }
+//             lsassert(ir1_target_pc);
+//             /* Jcc target tb should not be translated if the distance is too far */
+//             if (get_page(tb->pc) == get_page(ir1_target_pc)) {
+//                 target_tb = tu_tree_lookup(ir1_target_pc);
+//                 if (!target_tb) {
+//                     target_tb = tb_htable_lookup(cpu,
+//                         ir1_target_pc, cs_base, flags, cflags);
+//                 }
+//                 if (!target_tb) {
+//                     target_tb = tb_create(cpu, ir1_target_pc, cs_base, flags,
+//                                      cflags, max_insns, 0, TU_TB_START_JMP);
+//                     tu_push_back(target_tb);
+//                 }
+//                 if (target_tb && target_tb->tc.ptr != NULL) {
+//                     tb->tu_jmp[TU_TB_INDEX_TARGET] = 0;
+//                 }
+//                 tb->s_data->next_tb[TU_TB_INDEX_TARGET] = target_tb;
+//             } else {
+//                 tb->s_data->next_tb[TU_TB_INDEX_TARGET] = NULL;
+//             }
 
-            if (tb->tu_jmp[TU_TB_INDEX_TARGET] == 0) {
-                lsassert(tb->s_data->next_tb[TU_TB_INDEX_TARGET]);
-            }
-            break;
-        case IR1_TYPE_JUMP:
-            /* JMP target tb should not be translated if the distance is too far */
-            if (get_page(tb->pc) == get_page(ir1_target_pc)) {
-                target_tb = tu_tree_lookup(ir1_target_pc);
-                if (!target_tb) {
-                    target_tb = tb_htable_lookup(cpu,
-                        ir1_target_pc, cs_base, flags, cflags);
-                }
-                if (get_page(tb->pc) == get_page(ir1_target_pc) && !target_tb) {
-                    target_tb = tb_create(cpu, ir1_target_pc, cs_base, flags,
-                                     cflags, max_insns, 0, TU_TB_START_JMP);
-                    tu_push_back(target_tb);
-                }
-                tb->s_data->next_tb[TU_TB_INDEX_TARGET] = target_tb;
-            } else {
-                tb->s_data->next_tb[TU_TB_INDEX_TARGET] = NULL;
-            }
-            break;
-        case IR1_TYPE_CALLIN:
-        case IR1_TYPE_CALL:
-        case IR1_TYPE_NORMAL:
-        case IR1_TYPE_SYSCALL:
-            lsassert(ir1_next_pc);
-            if (get_page(tb->pc) == get_page(ir1_next_pc)) {
-                next_tb = tu_tree_lookup(ir1_next_pc);
-                if (!next_tb) {
-                    next_tb = tb_htable_lookup(cpu,
-                        ir1_next_pc, cs_base, flags, cflags);
-                }
-                if (!next_tb) {
-                    next_tb = tb_create(cpu, ir1_next_pc, cs_base, flags,
-                                   cflags, max_insns, 0, TU_TB_START_NORMAL);
-                    tu_push_back(next_tb);
-                }
-                tb->s_data->next_tb[TU_TB_INDEX_NEXT] = next_tb;
-            } else {
-                tb->s_data->next_tb[TU_TB_INDEX_NEXT] = NULL;
-            }
-            break;
-        case IR1_TYPE_JUMPIN:
-        case IR1_TYPE_RET:
-            break;
-        default:
-            lsassert(0);
-        }
-    }
+//             if (tb->tu_jmp[TU_TB_INDEX_TARGET] == 0) {
+//                 lsassert(tb->s_data->next_tb[TU_TB_INDEX_TARGET]);
+//             }
+//             break;
+//         case IR1_TYPE_JUMP:
+//             /* JMP target tb should not be translated if the distance is too far */
+//             if (get_page(tb->pc) == get_page(ir1_target_pc)) {
+//                 target_tb = tu_tree_lookup(ir1_target_pc);
+//                 if (!target_tb) {
+//                     target_tb = tb_htable_lookup(cpu,
+//                         ir1_target_pc, cs_base, flags, cflags);
+//                 }
+//                 if (get_page(tb->pc) == get_page(ir1_target_pc) && !target_tb) {
+//                     target_tb = tb_create(cpu, ir1_target_pc, cs_base, flags,
+//                                      cflags, max_insns, 0, TU_TB_START_JMP);
+//                     tu_push_back(target_tb);
+//                 }
+//                 tb->s_data->next_tb[TU_TB_INDEX_TARGET] = target_tb;
+//             } else {
+//                 tb->s_data->next_tb[TU_TB_INDEX_TARGET] = NULL;
+//             }
+//             break;
+//         case IR1_TYPE_CALLIN:
+//         case IR1_TYPE_CALL:
+//         case IR1_TYPE_NORMAL:
+//         case IR1_TYPE_SYSCALL:
+//             lsassert(ir1_next_pc);
+//             if (get_page(tb->pc) == get_page(ir1_next_pc)) {
+//                 next_tb = tu_tree_lookup(ir1_next_pc);
+//                 if (!next_tb) {
+//                     next_tb = tb_htable_lookup(cpu,
+//                         ir1_next_pc, cs_base, flags, cflags);
+//                 }
+//                 if (!next_tb) {
+//                     next_tb = tb_create(cpu, ir1_next_pc, cs_base, flags,
+//                                    cflags, max_insns, 0, TU_TB_START_NORMAL);
+//                     tu_push_back(next_tb);
+//                 }
+//                 tb->s_data->next_tb[TU_TB_INDEX_NEXT] = next_tb;
+//             } else {
+//                 tb->s_data->next_tb[TU_TB_INDEX_NEXT] = NULL;
+//             }
+//             break;
+//         case IR1_TYPE_JUMPIN:
+//         case IR1_TYPE_RET:
+//             break;
+//         default:
+//             lsassert(0);
+//         }
+//     }
 
-/* Note: *tb_num_in_tu maybe greater than MAX_TB_IN_TU. */
-    if (*tb_num_in_tu > MAX_TB_IN_TU + 1) {
-        lsassert(0);
-    }
-}
+// /* Note: *tb_num_in_tu maybe greater than MAX_TB_IN_TU. */
+//     if (*tb_num_in_tu > MAX_TB_IN_TU + 1) {
+//         lsassert(0);
+//     }
+// }
 
 void solve_tb_overlap(uint tb_num_in_tu,
 		TranslationBlock **tb_list, int max_insns)
@@ -585,54 +585,54 @@ void solve_tb_overlap(uint tb_num_in_tu,
     }
 }
 
-static TranslationBlock *tb_explore(CPUState *cpu,
-                              target_ulong pc, target_ulong cs_base,
-                              uint32_t flags, int cflags)
-{
-    TranslationBlock** tb_list = tu_data->tb_list;
-    uint32_t *tb_num_in_tu = &tu_data->tb_num;
-    uint32_t *ir1_num_in_tu = &tu_data->ir1_num_in_tu;
-    int max_insns;
+// static TranslationBlock *tb_explore(CPUState *cpu,
+//                               target_ulong pc, target_ulong cs_base,
+//                               uint32_t flags, int cflags)
+// {
+//     TranslationBlock** tb_list = tu_data->tb_list;
+//     uint32_t *tb_num_in_tu = &tu_data->tb_num;
+//     uint32_t *ir1_num_in_tu = &tu_data->ir1_num_in_tu;
+//     int max_insns;
 
-    max_insns = cflags & CF_COUNT_MASK;
-    if (max_insns == 0) {
-        max_insns = CF_COUNT_MASK;
-    }
-    if (max_insns > TCG_MAX_INSNS) {
-        max_insns = TCG_MAX_INSNS;
-    }
-    if (cpu->singlestep_enabled || singlestep) {
-        max_insns = 1;
-    }
-    *tb_num_in_tu = 0;
-    *ir1_num_in_tu = 0;
+//     max_insns = cflags & CF_COUNT_MASK;
+//     if (max_insns == 0) {
+//         max_insns = CF_COUNT_MASK;
+//     }
+//     if (max_insns > TCG_MAX_INSNS) {
+//         max_insns = TCG_MAX_INSNS;
+//     }
+//     if (cpu->singlestep_enabled || singlestep) {
+//         max_insns = 1;
+//     }
+//     *tb_num_in_tu = 0;
+//     *ir1_num_in_tu = 0;
 
-    tu_enough_space(cpu);
+//     tu_enough_space(cpu);
 
-    /* the entry used as return value*/
-    TranslationBlock *entry = tb_create(cpu, pc, cs_base,
-            flags, cflags, max_insns, true , TU_TB_START_ENTRY);
-    tu_push_back(entry);
+//     /* the entry used as return value*/
+//     TranslationBlock *entry = tb_create(cpu, pc, cs_base,
+//             flags, cflags, max_insns, true , TU_TB_START_ENTRY);
+//     tu_push_back(entry);
 
-    /* search all tbs we can get */
-    get_tu_queue(cpu, cs_base, flags, cflags, max_insns);
+//     /* search all tbs we can get */
+//     get_tu_queue(cpu, cs_base, flags, cflags, max_insns);
 
-    /* sort tbs by PC */
-    qsort(tb_list, *tb_num_in_tu, sizeof(TranslationBlock *), tb_sort_cmp);
+//     /* sort tbs by PC */
+//     qsort(tb_list, *tb_num_in_tu, sizeof(TranslationBlock *), tb_sort_cmp);
 
-    /* Some TBS may overlap. We split these overlapping TBS. */
-    solve_tb_overlap(*tb_num_in_tu, tb_list, max_insns);
+//     /* Some TBS may overlap. We split these overlapping TBS. */
+//     solve_tb_overlap(*tb_num_in_tu, tb_list, max_insns);
 
-    for (int i = 0; i < *tb_num_in_tu; i++){
-        /* record tu pc and tb_num */
-        tb_list[i]->s_data->tu_id = tb_list[0]->pc;
-    }
+//     for (int i = 0; i < *tb_num_in_tu; i++){
+//         /* record tu pc and tb_num */
+//         tb_list[i]->s_data->tu_id = tb_list[0]->pc;
+//     }
 
-    /* flag reduction */
-    tu_ir1_optimization(tb_list, *tb_num_in_tu);
+//     /* flag reduction */
+//     tu_ir1_optimization(tb_list, *tb_num_in_tu);
 
-    return entry;
-}
+//     return entry;
+// }
 
 uint bcc_ins_convert(uint convert_insn)
 {
@@ -997,69 +997,69 @@ retry:
 
 }
 
-static void register_tu(uint32 tb_num_in_tu, TranslationBlock **tb_list,
-		CPUState *cpu, int cflags)
-{
-    for (int i = 0; i < tb_num_in_tu; i++) {
-        TranslationBlock *tb = tb_list[i];
-        if (tb->s_data->tu_tb_mode != TU_TB_MODE_BROKEN
-				&& tb->s_data->tu_tb_mode != BAD_TB) {
-            CPUArchState *env = cpu->env_ptr;
-            tb_page_addr_t phys_pc;
-            tb_page_addr_t phys_page2;
-            target_ulong virt_page2;
-            phys_pc = get_page_addr_code(env, tb->pc);
-            if (phys_pc == -1) {
-                /* Generate a one-shot TB with 1 insn in it */
-                cflags = (cflags & ~CF_COUNT_MASK) | CF_LAST_IO | 1;
-            }
-            /* should inset TB to Qht */
-            virt_page2 = (tb->pc + tb->size - 1) & TARGET_PAGE_MASK;
-            phys_page2 = -1;
-            if ((tb->pc & TARGET_PAGE_MASK) != virt_page2) {
-                phys_page2 = get_page_addr_code(env, virt_page2);
-            }
-            tb_link_page(tb, phys_pc, phys_page2);
-            tcg_tb_insert(tb);
-        }
-    }
+// static void register_tu(uint32 tb_num_in_tu, TranslationBlock **tb_list,
+// 		CPUState *cpu, int cflags)
+// {
+//     for (int i = 0; i < tb_num_in_tu; i++) {
+//         TranslationBlock *tb = tb_list[i];
+//         if (tb->s_data->tu_tb_mode != TU_TB_MODE_BROKEN
+// 				&& tb->s_data->tu_tb_mode != BAD_TB) {
+//             CPUArchState *env = cpu->env_ptr;
+//             tb_page_addr_t phys_pc;
+//             tb_page_addr_t phys_page2;
+//             target_ulong virt_page2;
+//             phys_pc = get_page_addr_code(env, tb->pc);
+//             if (phys_pc == -1) {
+//                 /* Generate a one-shot TB with 1 insn in it */
+//                 cflags = (cflags & ~CF_COUNT_MASK) | CF_LAST_IO | 1;
+//             }
+//             /* should inset TB to Qht */
+//             virt_page2 = (tb->pc + tb->size - 1) & TARGET_PAGE_MASK;
+//             phys_page2 = -1;
+//             if ((tb->pc & TARGET_PAGE_MASK) != virt_page2) {
+//                 phys_page2 = get_page_addr_code(env, virt_page2);
+//             }
+//             tb_link_page(tb, phys_pc, phys_page2);
+//             tcg_tb_insert(tb);
+//         }
+//     }
 
-}
+// }
 
-/* Called with mmap_lock held for user mode emulation.  */
-TranslationBlock *tu_gen_code(CPUState *cpu,
-                              target_ulong pc, target_ulong cs_base,
-                              uint32_t flags, int cflags)
-{
-    TranslationBlock** tb_list = tu_data->tb_list;
-    uint32_t *tb_num_in_tu = &tu_data->tb_num;
+// /* Called with mmap_lock held for user mode emulation.  */
+// TranslationBlock *tu_gen_code(CPUState *cpu,
+//                               target_ulong pc, target_ulong cs_base,
+//                               uint32_t flags, int cflags)
+// {
+//     TranslationBlock** tb_list = tu_data->tb_list;
+//     uint32_t *tb_num_in_tu = &tu_data->tb_num;
 
-    /* TODO: profilea support */
-    assert_memory_lock();
-    qemu_thread_jit_write();
-    /*
-     * remove write prot of the page in case of paralell code modification,
-     * but the paired page cross 16K boundary is still not protected.
-     */
-    if (page_get_flags(pc) & PAGE_WRITE) {
-        mprotect((void *)(pc & qemu_host_page_mask),
-            qemu_host_page_size, PROT_READ);
-    }
+//     /* TODO: profilea support */
+//     assert_memory_lock();
+//     qemu_thread_jit_write();
+//     /*
+//      * remove write prot of the page in case of paralell code modification,
+//      * but the paired page cross 16K boundary is still not protected.
+//      */
+//     if (page_get_flags(pc) & PAGE_WRITE) {
+//         mprotect((void *)(pc & qemu_host_page_mask),
+//             qemu_host_page_size, PROT_READ);
+//     }
 
-    TranslationBlock* entry;
-    /* 1.Search all TBs in the function */
-    entry = tb_explore(cpu, pc, cs_base, flags, cflags);
-    if (unlikely(entry == NULL)) {
-	qemu_log_mask(LAT_LOG_AOT, "error translate a bad pc");
-	return tb_gen_code(cpu, pc, cs_base, flags, cflags);
-    }
+//     TranslationBlock* entry;
+//     /* 1.Search all TBs in the function */
+//     entry = tb_explore(cpu, pc, cs_base, flags, cflags);
+//     if (unlikely(entry == NULL)) {
+// 	qemu_log_mask(LAT_LOG_AOT, "error translate a bad pc");
+// 	return tb_gen_code(cpu, pc, cs_base, flags, cflags);
+//     }
 
-    translate_tu(*tb_num_in_tu, tb_list);
-    register_tu(*tb_num_in_tu, tb_list, cpu, cflags);
-    tu_trees_reset();
+//     translate_tu(*tb_num_in_tu, tb_list);
+//     register_tu(*tb_num_in_tu, tb_list, cpu, cflags);
+//     tu_trees_reset();
 
-    return entry;
-}
+//     return entry;
+// }
 
 #ifdef CONFIG_LATX_DEBUG
 void print_ir1(TranslationBlock* tb)

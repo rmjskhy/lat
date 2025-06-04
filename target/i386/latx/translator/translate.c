@@ -222,11 +222,19 @@ IR1_INST *get_ir1_list(struct TranslationBlock *tb, ADDRX pc, int max_insns)
         /* disasemble this instruction */
         pir1 = &ir1_list[ir1_num];
         /* get next pc */
+        if(debug_with_dis((void *)inst_cache)) {
 #ifdef CONFIG_LATX_TU
-        pc = ir1_disasm(pir1, inst_cache, pc, *ir1_num_in_tu + ir1_num, pir1_base);
+            pc = ir1_disasm_bd(pir1, inst_cache, pc, *ir1_num_in_tu + ir1_num, pir1_base);
 #else
-        pc = ir1_disasm(pir1, inst_cache, pc, ir1_num, pir1_base);
+            pc = ir1_disasm_bd(pir1, inst_cache, pc, ir1_num, pir1_base);
 #endif
+        } else {
+#ifdef CONFIG_LATX_TU
+            pc = ir1_disasm(pir1, inst_cache, pc, *ir1_num_in_tu + ir1_num, pir1_base);
+#else
+            pc = ir1_disasm(pir1, inst_cache, pc, ir1_num, pir1_base);
+#endif
+        }
         if (pir1->info == NULL) {
 #if defined(CONFIG_LATX_TU)
             tb->s_data->tu_tb_mode = TU_TB_MODE_BROKEN;
@@ -237,21 +245,38 @@ IR1_INST *get_ir1_list(struct TranslationBlock *tb, ADDRX pc, int max_insns)
         ir1_num++;
         lsassert(ir1_num <= 255);
 
-        /* check if TB is too large */
+        if (pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+            /* check if TB is too large */
 #ifdef CONFIG_LATX_DEBUG
-        if (ir1_num == max_insns) {
+            if (ir1_num == max_insns) {
 #else
-        if (ir1_num == max_insns && !ir1_is_tb_ending(pir1)) {
+            if (ir1_num == max_insns && !ir1_is_tb_ending(pir1)) {
 #endif
-            pc = ir1_addr(pir1);
-            ir1_make_ins_JMP(pir1, pc, 0);
-            break;
+                pc = ir1_addr(pir1);
+                ir1_make_ins_JMP(pir1, pc, 0);
+                break;
+            }
+        } else {
+            /* check if TB is too large */
+#ifdef CONFIG_LATX_DEBUG
+            if (ir1_num == max_insns) {
+#else
+            if (ir1_num == max_insns && !ir1_is_tb_ending_bd(pir1)) {
+#endif
+                pc = ir1_addr_bd(pir1);
+                ir1_make_ins_JMP_bd(pir1, pc, 0);
+                break;
+            }
         }
-    } while (!ir1_is_tb_ending(pir1));
+    } while (!(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE ? 
+                ir1_is_tb_ending(pir1) : ir1_is_tb_ending_bd(pir1)));
     tb->size = pc - start_pc;
     tb->icount = ir1_num;
 #if defined(CONFIG_LATX_TU) || defined(CONFIG_LATX_AOT)
-    get_last_info(tb, &ir1_list[ir1_num - 1]);
+    if (ir1_list[ir1_num - 1].decode_engine == OPT_DECODE_BY_CAPSTONE)
+        get_last_info(tb, &ir1_list[ir1_num - 1]);
+    else
+        get_last_info_bd(tb, &ir1_list[ir1_num - 1]);
 #endif
 
     if (!ir1_num)
@@ -264,16 +289,29 @@ IR1_INST *get_ir1_list(struct TranslationBlock *tb, ADDRX pc, int max_insns)
         next_pir1->info = NULL;
     }
 #endif
-    if (pir1->info != NULL && ir1_num == 2 && ir1_is_return(pir1) &&
-        ir1_opcode(&ir1_list[0]) == dt_X86_INS_MOV) {
+    if (pir1->info != NULL && ir1_num == 2 &&
+        (pir1->decode_engine == OPT_DECODE_BY_CAPSTONE ? ir1_is_return(pir1): ir1_is_return_bd(pir1)) &&
+        (ir1_list[0].decode_engine == OPT_DECODE_BY_CAPSTONE ? ir1_opcode(&ir1_list[0]) == dt_X86_INS_MOV :
+        ir1_opcode_bd(&ir1_list[0]) == ND_INS_MOV)) {
         IR1_INST *insert_ir1 = &ir1_list[0];
-        IR1_OPND *opnd1 = ir1_get_opnd(insert_ir1, 1);
-        if (ir1_opnd_type(opnd1) == dt_X86_OP_MEM &&
+        if (insert_ir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+            IR1_OPND *opnd1 = ir1_get_opnd(insert_ir1, 1);
+            if (ir1_opnd_type(opnd1) == dt_X86_OP_MEM &&
             ir1_opnd_base_reg(opnd1) == dt_X86_REG_ESP &&
             ir1_opnd_simm(opnd1) == 0) {
             IR1_OPND *opnd0 = ir1_get_opnd(insert_ir1, 0);
             int reg_index = ir1_opnd_base_reg_num(opnd0);
             ht_pc_thunk_insert(start_pc, reg_index);
+            }
+        } else {
+            IR1_OPND_BD *opnd1 = ir1_get_opnd_bd(insert_ir1, 1);
+            if (ir1_opnd_type_bd(opnd1) == ND_OP_MEM &&
+                ir1_opnd_base_reg_bd(opnd1) == NDR_ESP &&
+                ir1_opnd_simm_bd(opnd1) == 0) {
+                IR1_OPND_BD *opnd0 = ir1_get_opnd_bd(insert_ir1, 0);
+                int reg_index = ir1_opnd_base_reg_num_bd(opnd0);
+                ht_pc_thunk_insert(start_pc, reg_index);
+            }
         }
     }
 
@@ -1893,7 +1931,7 @@ bool ir1_translate(IR1_INST *ir1)
     }
 
     // MOVSD means movsd(movs) or movsd(sse2) , diff opcode
-    if (ir1_opcode(ir1) == dt_X86_INS_MOVSD) {
+    if (ir1_opcode(ir1) == dt_X86_INS_MOVSD) { 
         if (ir1->info->x86.opcode[0] == 0xa5) {
             translation_success = translate_movs(ir1);
         } else if (ir1->info->x86.opcode[0] == 0x0f) {
@@ -1994,7 +2032,11 @@ static inline void tr_init_for_each_ir1_in_tb(IR1_INST *pir1, int nr, int index)
 
     /* TODO: this addr only stored low 32 bits */
     IR2_OPND ir2_opnd_addr;
-    ir2_opnd_build(&ir2_opnd_addr, IR2_OPND_IMM, ir1_addr(pir1));
+    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+        ir2_opnd_build(&ir2_opnd_addr, IR2_OPND_IMM, ir1_addr(pir1));
+    } else {
+        ir2_opnd_build(&ir2_opnd_addr, IR2_OPND_IMM, ir1_addr_bd(pir1));
+    }
     la_x86_inst(ir2_opnd_addr);
 }
 
@@ -2012,7 +2054,13 @@ static unsigned long tb_checksum(const uint8_t * start, size_t len)
 
 static void tr_check_x86ins_change(struct TranslationBlock *tb)
 {
-    size_t checksum_len = ir1_addr_next(tb_ir1_inst_last(tb)) - tb->pc;
+    size_t checksum_len;
+    IR1_INST *pir1 = tb_ir1_inst_last(tb);
+    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+        checksum_len = ir1_addr_next(pir1) - tb->pc;
+    } else {
+        checksum_len = ir1_addr_next_bd(pir1) - tb->pc;
+    }
     IR2_OPND checksum_tmp_d = ra_alloc_itemp();
     IR2_OPND checksum_tmp_sum = ra_alloc_itemp();
     IR2_OPND checksum_start = ra_alloc_itemp();
@@ -2110,50 +2158,99 @@ int tr_ir2_generate(struct TranslationBlock *tb)
             // int mem_count = imm_cache_extract_ir1_mem_opnd(t_pir1, opnd);
             for (int i = 0; i < ir1_nr; i++) {
                 imm_cache->curr_ir1_index = i;
-                imm_cache_print_ir1(t_pir1);
-                IR1_OPND *opnd = NULL;
-                for (int j = 0; j < t_pir1->info->x86.op_count; j++) {
-                    opnd = ir1_get_opnd(t_pir1, j);
-                    longx offset;
-                    if (ir1_opnd_type(opnd) == dt_X86_OP_MEM) {
-                        offset = (longx)(opnd->mem.disp);
-                    } else {
-                        continue;
-                    }
+                if(t_pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+                    imm_cache_print_ir1(t_pir1);
+                    IR1_OPND *opnd = NULL;
+                    for (int j = 0; j < t_pir1->info->x86.op_count; j++) {
+                        opnd = ir1_get_opnd(t_pir1, j);
+                        longx offset;
+                        if (ir1_opnd_type(opnd) == dt_X86_OP_MEM) {
+                            offset = (longx)(opnd->mem.disp);
+                        } else {
+                            continue;
+                        }
 #ifdef TARGET_X86_64
-                    if (ir1_opnd_base_reg(opnd) == dt_X86_REG_RIP) {
-                        offset += ir1_addr_next(t_pir1);
-                        imm_cache_precache_put(imm_cache, -100, -1,
-                                           -1, offset);
-                        continue;
-                    }
+                        if (ir1_opnd_base_reg(opnd) == dt_X86_REG_RIP) {
+                            offset += ir1_addr_next(t_pir1);
+                            imm_cache_precache_put(imm_cache, -100, -1,
+                                            -1, offset);
+                            continue;
+                        }
 #endif
-                    /* convert_mem_helper will put si12 offset into host_off */
-                    if (!si12_overflow(offset)) {
-                        continue;
-                    }
-                    // record base and index
-                    bool has_index = ir1_opnd_has_index(opnd);
-                    bool has_base = ir1_opnd_has_base(opnd);
-                    int base_op = -1;
-                    int index_op = -1;
-                    int scale = -1;
-                    if (has_base) {
-                        base_op = ir1_opnd_base_reg_num(opnd);
-                    }
-                    if (has_index) {
-                        index_op = ir1_opnd_index_reg_num(opnd);
-                        scale = ir1_opnd_scale(opnd);
-                        if (scale != 1 && scale != 2 && scale != 4 &&
-                            scale != 8) {
-                            scale = -1;
+                        /* convert_mem_helper will put si12 offset into host_off */
+                        if (!si12_overflow(offset)) {
+                            continue;
+                        }
+                        // record base and index
+                        bool has_index = ir1_opnd_has_index(opnd);
+                        bool has_base = ir1_opnd_has_base(opnd);
+                        int base_op = -1;
+                        int index_op = -1;
+                        int scale = -1;
+                        if (has_base) {
+                            base_op = ir1_opnd_base_reg_num(opnd);
+                        }
+                        if (has_index) {
+                            index_op = ir1_opnd_index_reg_num(opnd);
+                            scale = ir1_opnd_scale(opnd);
+                            if (scale != 1 && scale != 2 && scale != 4 &&
+                                scale != 8) {
+                                scale = -1;
+                            }
+                        }
+
+                        if (base_op != -1 || index_op != -1) {
+                            // qemu_log_mask(LAT_IMM_REG,"[imm_cache-]")
+                            imm_cache_precache_put(imm_cache, base_op,
+                                            index_op, scale, offset);
                         }
                     }
+                } else {
+                    imm_cache_print_ir1_bd(t_pir1);
+                    IR1_OPND_BD *opnd = NULL;
+                    for (int j = 0; j < ir1_get_opnd_num_bd(t_pir1); j++) {
+                        opnd = ir1_get_opnd_bd(t_pir1, j);
+                        longx offset;
+                        if (ir1_opnd_type_bd(opnd) == ND_OP_MEM) {
+                            offset = (longx)(opnd->Info.Memory.Disp);
+                        } else {
+                            continue;
+                        }
+#ifdef TARGET_X86_64
+                        if (ir1_opnd_is_pc_relative_bd(opnd)) {
+                            offset += ir1_addr_next_bd(t_pir1);
+                            imm_cache_precache_put(imm_cache, -100, -1,
+                                            -1, offset);
+                            continue;
+                        }
+#endif
+                        /* convert_mem_helper will put si12 offset into host_off */
+                        if (!si12_overflow(offset)) {
+                            continue;
+                        }
+                        // record base and index
+                        bool has_index = ir1_opnd_has_index_bd(opnd);
+                        bool has_base = ir1_opnd_has_base_bd(opnd);
+                        int base_op = -1;
+                        int index_op = -1;
+                        int scale = -1;
+                        if (has_base) {
+                            base_op = ir1_opnd_base_reg_num_bd(opnd);
+                        }
+                        if (has_index) {
+                            index_op = ir1_opnd_index_reg_num_bd(opnd);
+                            scale = ir1_opnd_scale_bd(opnd);
+                            if (scale != 1 && scale != 2 && scale != 4 &&
+                                scale != 8) {
+                                scale = -1;
+                            }
+                        }
 
-                    if (base_op != -1 || index_op != -1) {
-                        // qemu_log_mask(LAT_IMM_REG,"[imm_cache-]")
-                        imm_cache_precache_put(imm_cache, base_op,
-                                           index_op, scale, offset);
+                        if (base_op != -1 || index_op != -1) {
+                            // qemu_log_mask(LAT_IMM_REG,"[imm_cache-]")
+                            imm_cache_precache_put(imm_cache, base_op,
+                                            index_op, scale, offset);
+                        }
                     }
                 }
                 t_pir1++;
@@ -2163,66 +2260,127 @@ int tr_ir2_generate(struct TranslationBlock *tb)
     }
 #endif
     for (i = 0; i < ir1_nr; ++i) {
-        /*
-         * handle segv scenario, store host pc to gen_insn_data and encode to a BYTE
-         * at the end of TB translate cache.
-         */
-        tcg_ctx->gen_insn_data[i][0] = pir1->info->address;
-        tcg_ctx->gen_insn_data[i][1] = 0;
+        if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+            /*
+            * handle segv scenario, store host pc to gen_insn_data and encode to a BYTE
+            * at the end of TB translate cache.
+            */
+            tcg_ctx->gen_insn_data[i][0] = pir1->info->address;
+            tcg_ctx->gen_insn_data[i][1] = 0;
 
 #ifdef CONFIG_LATX_IMM_REG
-        imm_cache->curr_ir1_index = i;
-        imm_cache->curr_ir2_index = lsenv->tr_data->ir2_inst_num_current;
+            imm_cache->curr_ir1_index = i;
+            imm_cache->curr_ir2_index = lsenv->tr_data->ir2_inst_num_current;
 #endif
-        tr_init_for_each_ir1_in_tb(pir1, ir1_nr, i);
+            tr_init_for_each_ir1_in_tb(pir1, ir1_nr, i);
 #if defined(CONFIG_LATX_DEBUG) && defined(TARGET_X86_64) && \
     defined(CONFIG_LATX_RUNTIME_TRACE_RANGE)
-        if (pir1->info->address == option_begin_trace_addr) {
-            need_trace = true;
-        } else if (pir1->info->address == option_end_trace_addr) {
-            need_trace = false;
-        }
-        if (need_trace) {
-            gen_ins_context_in_helper(pir1);
-        }
+            if (pir1->info->address == option_begin_trace_addr) {
+                need_trace = true;
+            } else if (pir1->info->address == option_end_trace_addr) {
+                need_trace = false;
+            }
+            if (need_trace) {
+                gen_ins_context_in_helper(pir1);
+            }
 #endif
 
-        if (option_softfpu == 2 && !reduce_proepo) {
-            tr_func_idx = ir1_opcode(pir1) - dt_X86_INS_INVALID;
-            if (tr_func_idx <= dt_X86_INS_FYL2XP1) {
-                reduce_proepo = true;
-                gen_softfpu_helper_prologue(pir1);
+            if (option_softfpu == 2 && !reduce_proepo) {
+                tr_func_idx = ir1_opcode(pir1) - dt_X86_INS_INVALID;
+                if (tr_func_idx <= dt_X86_INS_FYL2XP1) {
+                    reduce_proepo = true;
+                    gen_softfpu_helper_prologue(pir1);
+                }
+            }
+
+            bool translation_success = ir1_translate(pir1);
+            if (!translation_success) {
+#ifdef CONFIG_LATX_TU
+                tb->s_data->tu_tb_mode = BAD_TB;
+#else
+                lsassertm(0, "ir1_translate fail");
+#endif
+            }
+        } else {
+            /*
+            * handle segv scenario, store host pc to gen_insn_data and encode to a BYTE
+            * at the end of TB translate cache.
+            */
+            tcg_ctx->gen_insn_data[i][0] = ir1_addr_bd(pir1);
+            tcg_ctx->gen_insn_data[i][1] = 0;
+
+#ifdef CONFIG_LATX_IMM_REG
+            imm_cache->curr_ir1_index = i;
+            imm_cache->curr_ir2_index = lsenv->tr_data->ir2_inst_num_current;
+#endif
+            tr_init_for_each_ir1_in_tb(pir1, ir1_nr, i);
+#if defined(CONFIG_LATX_DEBUG) && defined(TARGET_X86_64) && \
+    defined(CONFIG_LATX_RUNTIME_TRACE_RANGE)
+            if (ir1_addr_bd(pir1) == option_begin_trace_addr) {
+                need_trace = true;
+            } else if (ir1_addr_bd(pir1) == option_end_trace_addr) {
+                need_trace = false;
+            }
+            if (need_trace) {
+                gen_ins_context_in_helper(pir1);
+            }
+#endif
+
+            if (option_softfpu == 2 && !reduce_proepo) {
+                tr_func_idx = ir1_opcode_bd(pir1) - ND_INS_INVALID;
+                if (ND_INS_F2XM1 <= tr_func_idx && tr_func_idx <= ND_INS_FYL2XP1) {
+                    reduce_proepo = true;
+                    gen_softfpu_helper_prologue_bd(pir1);
+                }
+            }
+
+            bool translation_success = ir1_translate_bd(pir1);
+            if (!translation_success) {
+#ifdef CONFIG_LATX_TU
+                tb->s_data->tu_tb_mode = BAD_TB;
+#else
+                lsassertm(0, "ir1_translate fail");
+#endif
             }
         }
-
-        bool translation_success = ir1_translate(pir1);
-        if (!translation_success) {
-#ifdef CONFIG_LATX_TU
-            tb->s_data->tu_tb_mode = BAD_TB;
-#else
-            lsassertm(0, "ir1_translate fail");
-#endif
-        }
-
         if (option_softfpu == 2 && reduce_proepo) {
             if (i < ir1_nr - 1) {
                 IR1_INST *pir1_next = pir1 + 1;
-                tr_func_idx = ir1_opcode(pir1_next) - dt_X86_INS_INVALID;
-                if (tr_func_idx > dt_X86_INS_FYL2XP1) {
-                    reduce_proepo = false;
-                    gen_softfpu_helper_epilogue(pir1);
+                if(pir1_next->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+                    tr_func_idx = ir1_opcode(pir1_next) - dt_X86_INS_INVALID;
+                    if (tr_func_idx > dt_X86_INS_FYL2XP1) {
+                        reduce_proepo = false;
+                        if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+                            gen_softfpu_helper_epilogue(pir1);
+                        } else {
+                            gen_softfpu_helper_epilogue_bd(pir1);
+                        }
+                    }
+                } else {
+                    tr_func_idx = ir1_opcode_bd(pir1_next) - ND_INS_INVALID;
+                    if (tr_func_idx > ND_INS_FYL2XP1 || tr_func_idx < ND_INS_F2XM1) {
+                        reduce_proepo = false;
+                        if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+                            gen_softfpu_helper_epilogue(pir1);
+                        } else {
+                            gen_softfpu_helper_epilogue_bd(pir1);
+                        }
+                    }
                 }
             }
         }
 
 #ifdef CONFIG_LATX_IMM_REG
         if (option_imm_reg) {
-            imm_cache_update_ir1_usage(imm_cache, pir1, i);
+            if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+                imm_cache_update_ir1_usage(imm_cache, pir1, i);
+            } else {
+                imm_cache_update_ir1_usage_bd(imm_cache, pir1, i);
+            }
             // log translated ir2 if ir1 is opted by imm_reg
             imm_cache_print_tr_ir2_if_opted();
         }
 #endif
-
         pir1++;
     }
 #ifdef CONFIG_LATX_DEBUG
@@ -2230,7 +2388,11 @@ int tr_ir2_generate(struct TranslationBlock *tb)
         pir1 = tb_ir1_inst(tb, 0);
         for (i = 0; i < ir1_nr; ++i) {
             qemu_log("%llx IR1[%d] ", (unsigned long long)pthread_self(), i);
-            ir1_dump(pir1);
+            if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+                ir1_dump(pir1);
+            } else {
+                ir1_dump_bd(pir1);
+            }
             pir1++;
         }
     }
@@ -3141,7 +3303,11 @@ static void eflags_eliminate_debugger(TranslationBlock *tb, int n,
                 *pins = cpu_read_code_via_qemu(lsenv->cpu_state, pc + j);
                 pins++;
             }
-            pc = ir1_disasm(&pir1, inst_cache, pc, 0, &info);
+            if(debug_with_dis((void *)inst_cache)) {
+                pc = ir1_disasm_bd(&pir1, inst_cache, pc, 0, &info);
+            } else {
+                pc = ir1_disasm(&pir1, inst_cache, pc, 0, &info);
+            }
             qemu_log("[EFLAGS] ");
             ir1_dump(&pir1);
         }

@@ -252,10 +252,19 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     }
 
     uint64_t mem_access_count = 0;
-    for (int j = 0; j < pir1->info->x86.op_count; j++) {
-        IR1_OPND *opnd = ir1_get_opnd(pir1, j);
-        if (ir1_opnd_is_mem(opnd)) {
-            mem_access_count++;
+    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+        for (int j = 0; j < pir1->info->x86.op_count; j++) {
+            IR1_OPND *opnd = ir1_get_opnd(pir1, j);
+            if (ir1_opnd_is_mem(opnd)) {
+                mem_access_count++;
+            }
+        }
+    } else {
+        for (int j = 0; j < ir1_get_opnd_num_bd(pir1); j++) {
+            IR1_OPND_BD *opnd = ir1_get_opnd_bd(pir1, j);
+            if (ir1_opnd_is_mem_bd(opnd)) {
+                mem_access_count++;
+            }
         }
     }
     /* store eflags as last reg */
@@ -272,7 +281,11 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     /* this is ins */
     {
        IR2_OPND tmp_opnd1 = ir2_opnd_new(IR2_OPND_GPR, 11);
-       li_d(tmp_opnd1, (ADDR)pir1->info->x86.opcode);
+       if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+            li_d(tmp_opnd1, (ADDR)pir1->info->x86.opcode);
+       } else {
+            li_d(tmp_opnd1, (ADDR)((INSTRUX *)(pir1->info))->OpCodeBytes);
+       }
        la_st_d(tmp_opnd1, sp_ir2_opnd,
                             TRACE_REG_STACK_OFFSET + i * 8);
        i += 1;
@@ -288,11 +301,19 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     IR2_OPND a2_opnd = ir2_opnd_new(IR2_OPND_GPR, la_a2);
     IR2_OPND a3_opnd = ir2_opnd_new(IR2_OPND_GPR, la_a3);
     la_andi(a0_opnd, a0_opnd, 0);
-    la_ori(a0_opnd, a0_opnd, pir1->info->size);
+    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+        la_ori(a0_opnd, a0_opnd, pir1->info->size);
+    } else {
+        la_ori(a0_opnd, a0_opnd, ((INSTRUX *)(pir1->info))->Length);
+    }
     la_andi(a1_opnd, a1_opnd, 0);
     la_or(a1_opnd, a1_opnd, sp_ir2_opnd);
     la_andi(a2_opnd, a2_opnd, 0);
-    li_d(a2_opnd, (ADDR)pir1->info->address);
+    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
+        li_d(a2_opnd, (ADDR)pir1->info->address);
+    } else {
+        li_d(a2_opnd, (ADDR)pir1->address);
+    }
     li_d(a3_opnd, (ADDR)mem_access_count);
 
     tr_gen_call_to_helper(helper_method, LOAD_HELPER_TRACE_SESSION_BEGIN);

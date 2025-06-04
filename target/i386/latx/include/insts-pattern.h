@@ -46,6 +46,10 @@ typedef int scan_elem_t;
 void insts_pattern_scan_con(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 bool insts_pattern_scan_jcc_end(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 
+void insts_pattern_scan_con_bd_bd(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
+bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir1_index, scan_elem_t *scan);
+
+
 #ifdef CONFIG_LATX_INSTS_PATTERN
 
 #define DEF_INSTS_PTN(_prex) \
@@ -55,9 +59,18 @@ bool insts_pattern_scan_jcc_end(TranslationBlock *tb, IR1_INST *ir1, int index, 
 #define OPT_INSTS_PTN(tb, inst, index, _prex) \
         do { \
             if (option_instptn) { \
-                insts_pattern_scan_con(tb, inst, index, _prex##_scaned_cond); \
-                if (scan_head)  \
-                    scan_head = insts_pattern_scan_jcc_end(tb, inst, index, _prex##_scaned_jcc_end); \
+                if(inst->decode_engine == OPT_DECODE_BY_CAPSTONE) { \
+                    insts_pattern_scan_con(tb, inst, index, _prex##_scaned_cond); \
+                } else { \
+                    insts_pattern_scan_con_bd(tb, inst, index, _prex##_scaned_cond); \
+                } \
+                if (scan_head) {  \
+                    if(inst->decode_engine == OPT_DECODE_BY_CAPSTONE) { \
+                        scan_head = insts_pattern_scan_jcc_end(tb, inst, index, _prex##_scaned_jcc_end); \
+                    } else { \
+                        scan_head = insts_pattern_scan_jcc_end_bd(tb, inst, index, _prex##_scaned_jcc_end); \
+                    } \
+                } \
             } \
         } while (0)
 
@@ -140,5 +153,6 @@ bool insts_pattern_scan_jcc_end(TranslationBlock *tb, IR1_INST *ir1, int index, 
 #endif
 
 bool try_translate_instptn(IR1_INST *pir1);
+bool try_translate_instptn_bd(IR1_INST *pir1);
 
 #endif

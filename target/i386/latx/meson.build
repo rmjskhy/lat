@@ -101,6 +101,25 @@ if cs_latx_debug or cs_git
     i386_ss.add(when: 'CONFIG_LATX', if_true: capstone_git)
 endif
 
+
+bddisasm_lib = static_library('bddisasm',
+        build_by_default: true,
+        sources: files('bddisasm/bddisasm.c'),
+        include_directories: include_directories('include/', 'include/bddisasm'))
+
+if ('CONFIG_BDDISASM_NO_MNEMONIC' in config_host)
+    bddisasm = declare_dependency(link_with: bddisasm_lib,
+        link_args: ['-L' + meson.current_source_dir() + '/extlib', '-lbddisasm'],
+        include_directories: include_directories('include/'))
+else
+    bddisasm = declare_dependency(link_with: bddisasm_lib,
+        link_args: ['-L' + meson.current_source_dir() + '/extlib', '-lbddisasm-print'],
+        include_directories: include_directories('include/'))
+endif
+
+i386_ss.add(bddisasm)
+
+
 r = run_command('python3', 'convert.py', check: true)
 message('convert.py ->', r.stdout().strip(), r.stderr().strip())
 
@@ -109,6 +128,7 @@ subdir('ir1')
 subdir('ir2')
 subdir('optimization')
 subdir('translator')
+subdir('translator-bd')
 subdir('sbt')
 if latx_kzt
     subdir('context')

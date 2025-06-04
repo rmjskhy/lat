@@ -1,9 +1,13 @@
 i386_ss.add(when: 'CONFIG_LATX', if_true: files(
   'tu.c',
+  'tu-bd.c',
   'opt-jmp.c',
   'flag-lbt.c',
+  'flag-lbt-bd.c',
   'flag-reduction.c',
+  'flag-reduction-bd.c',
   'insts-pattern.c',
+  'insts-pattern-bd.c',
   'ir1-optimization.c',
   'ir2-optimization.c',
   'tunnel-lib.c',
@@ -11,5 +15,6 @@ i386_ss.add(when: 'CONFIG_LATX', if_true: files(
   'profile.c',
   'ts.c',
   'imm-cache.c',
-  'hbr.c'
+  'hbr.c',
+  'hbr-bd.c'
 ))

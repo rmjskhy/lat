@@ -349,6 +349,7 @@ ADDRX ir1_disasm(IR1_INST *ir1, uint8_t *addr, ADDRX t_pc, int ir1_num, void *pi
         1, &info, ir1_num, pir1_base, CODEIS64);
 
     ir1->info = info;
+    ir1->decode_engine = OPT_DECODE_BY_CAPSTONE;
 
     /* Invalid Insn */
     if (info == NULL) {

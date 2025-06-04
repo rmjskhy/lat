@@ -159,6 +159,8 @@ void imm_cache_print_cache(IMM_CACHE *cache);
 void imm_cache_print_bucket(IMM_CACHE_BUCKET *bucket, int index);
 void imm_cache_print_ir2(IR2_INST *ir2, int index);
 void imm_cache_print_tb_ir1(TranslationBlock *tb);
+void imm_cache_print_tb_ir1_bd(TranslationBlock *tb);
 void imm_cache_print_ir1(IR1_INST *pir1);
+void imm_cache_print_ir1_bd(IR1_INST *pir1);
 void imm_cache_print_tr_ir2_if_opted(void);
 #endif

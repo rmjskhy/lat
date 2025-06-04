@@ -67,8 +67,8 @@
 #define CONFIG_LATX_LARGE_CC        /* code cache > 128MB */
 #undef CONFIG_LATX_AOT
 #define CONFIG_LATX_AOT
-#undef CONFIG_LATX_INSTS_PATTERN
-#define CONFIG_LATX_INSTS_PATTERN   /* insts pattern */
+// #undef CONFIG_LATX_INSTS_PATTERN
+// #define CONFIG_LATX_INSTS_PATTERN   /* insts pattern */
 #undef CONFIG_LATX_JRRA
 #define CONFIG_LATX_JRRA            /* jr-ra, */
 #undef CONFIG_LATX_OPT_PUSH_POP
@@ -77,14 +77,14 @@
 #define CONFIG_LATX_SSSE3_SSE4
 #undef CONFIG_LATX_SPLIT_TB
 #define CONFIG_LATX_SPLIT_TB
-#undef CONFIG_LATX_XCOMISX_OPT
-#define CONFIG_LATX_XCOMISX_OPT
+// #undef CONFIG_LATX_XCOMISX_OPT
+// #define CONFIG_LATX_XCOMISX_OPT
 #undef CONFIG_LATX_MONITOR_SHARED_MEM
 #define CONFIG_LATX_MONITOR_SHARED_MEM
 #undef CONFIG_LATX_TU
 #define CONFIG_LATX_TU              /* tu, */
-#undef CONFIG_LATX_IMM_REG
-#define CONFIG_LATX_IMM_REG         /* imm-reg optimization */
+// #undef CONFIG_LATX_IMM_REG
+// #define CONFIG_LATX_IMM_REG         /* imm-reg optimization */
 #undef CONFIG_LATX_HBR
 #define CONFIG_LATX_HBR
 #endif
