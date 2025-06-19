@@ -269,7 +269,7 @@ static void __attribute__((__constructor__)) x86tomisp_ir1_init_bd(void)
 }
 
 bool debug_with_dis(const uint8_t *addr)
-{//return true;
+{return false;
     INSTRUX info;
     NDSTATUS status;
 #if TARGET_ABI_BITS == 64
@@ -369,6 +369,9 @@ bool debug_with_dis(const uint8_t *addr)
         case WRAP(FIADD):
         case WRAP(FICOM):
         case WRAP(FICOMP):
+        case WRAP(UD0):
+        case WRAP(UD1):
+        case WRAP(UD2):
         case WRAP(FIDIV):
         case WRAP(FIDIVR):
         case WRAP(FILD):
@@ -449,6 +452,7 @@ bool debug_with_dis(const uint8_t *addr)
         case WRAP(RETF):
         case WRAP(IRET):
         case WRAP(RETN):
+        case WRAP(JMPNR):
         case WRAP(JMPNI):
         case WRAP(ENTER):
         case WRAP(LEAVE):
@@ -475,6 +479,382 @@ bool debug_with_dis(const uint8_t *addr)
         case WRAP(EMMS):
         case WRAP(XLATB):
         case WRAP(CRC32):
+
+        case WRAP(POR):
+        case WRAP(PXOR):
+        case WRAP(PACKSSWB):
+        case WRAP(PACKSSDW):
+        case WRAP(PACKUSWB):
+        case WRAP(PADDB):
+        case WRAP(PADDW):
+        case WRAP(PADDD):
+        case WRAP(PADDSB):
+        case WRAP(PADDSW):
+        case WRAP(PADDUSB):
+        case WRAP(PADDUSW):
+        case WRAP(PAND):
+        case WRAP(PANDN):
+        case WRAP(PMADDWD):
+        case WRAP(PMULHUW):
+        case WRAP(PMULHW):
+        case WRAP(PMULLW):
+        case WRAP(PSUBB):
+        case WRAP(PSUBW):
+        case WRAP(PSUBD):
+        case WRAP(PSUBSB):
+        case WRAP(PSUBSW):
+        case WRAP(PSUBUSB):
+        case WRAP(PSUBUSW):
+        case WRAP(PUNPCKHBW):
+        case WRAP(PUNPCKHWD):
+        case WRAP(PUNPCKHDQ):
+        case WRAP(PUNPCKLBW):
+        case WRAP(PUNPCKLWD):
+        case WRAP(PUNPCKLDQ):
+        case WRAP(ADDPS):
+        case WRAP(ADDSD):
+        case WRAP(ADDSS):
+        case WRAP(ANDNPD):
+        case WRAP(ANDNPS):
+        case WRAP(ANDPS):
+        case WRAP(DIVPD):
+        case WRAP(DIVPS):
+        case WRAP(DIVSD):
+        case WRAP(DIVSS):
+        case WRAP(MAXPD):
+        case WRAP(MAXPS):
+        case WRAP(MAXSD):
+        case WRAP(MAXSS):
+        case WRAP(MINPD):
+        case WRAP(MINPS):
+        case WRAP(MINSD):
+        case WRAP(MINSS):
+        case WRAP(MULPD):
+        case WRAP(MULPS):
+        case WRAP(MULSD):
+        case WRAP(MULSS):
+        case WRAP(ORPD):
+        case WRAP(ORPS):
+        case WRAP(PADDQ):
+        case WRAP(PAVGB):
+        case WRAP(PAVGW):
+        case WRAP(PEXTRW):
+        case WRAP(PINSRW):
+        case WRAP(PMAXSW):
+        case WRAP(PMAXUB):
+        case WRAP(PMINSW):
+        case WRAP(PMINUB):
+        case WRAP(PMULUDQ):
+        case WRAP(PSADBW):
+        case WRAP(PSHUFD):
+        case WRAP(PSHUFW):
+        case WRAP(PSHUFHW):
+        case WRAP(PSHUFLW):
+        case WRAP(PSUBQ):
+        case WRAP(PUNPCKHQDQ):
+        case WRAP(RCPSS):
+        case WRAP(RCPPS):
+        case WRAP(RSQRTSS):
+        case WRAP(RSQRTPS):
+        case WRAP(SQRTPD):
+        case WRAP(SQRTPS):
+        case WRAP(ADDPD):
+        case WRAP(ANDPD):
+        case WRAP(UNPCKLPS):
+        case WRAP(UNPCKLPD):
+        case WRAP(UNPCKHPD):
+        case WRAP(UNPCKHPS):
+        case WRAP(SHUFPS):
+        case WRAP(SHUFPD):
+        case WRAP(PUNPCKLQDQ):
+        case WRAP(XORPS):
+        case WRAP(XORPD):
+        case WRAP(SUBSS):
+        case WRAP(SUBSD):
+        case WRAP(SUBPS):
+        case WRAP(SUBPD):
+        case WRAP(SQRTSD):
+        case WRAP(SQRTSS):
+        case WRAP(PAUSE):
+        case WRAP(HADDPD):
+        case WRAP(HADDPS):
+        case WRAP(HSUBPD):
+        case WRAP(HSUBPS):
+        case WRAP(PSIGNB):
+        case WRAP(PSIGNW):
+        case WRAP(PSIGND):
+        case WRAP(PABSB):
+        case WRAP(PABSW):
+        case WRAP(PABSD):
+        case WRAP(PALIGNR):
+        case WRAP(PSHUFB):
+        case WRAP(PMULHRSW):
+        case WRAP(PMADDUBSW):
+        case WRAP(PHSUBW):
+        case WRAP(PHSUBD):
+        case WRAP(PHSUBSW):
+        case WRAP(PHADDW):
+        case WRAP(PHADDD):
+        case WRAP(PHADDSW):
+        case WRAP(DPPS):
+        case WRAP(DPPD):
+        case WRAP(BLENDPS):
+        case WRAP(BLENDPD):
+        case WRAP(BLENDVPS):
+        case WRAP(BLENDVPD):
+        case WRAP(ROUNDPS):
+        case WRAP(ROUNDSS):
+        case WRAP(ROUNDPD):
+        case WRAP(ROUNDSD):
+        case WRAP(INSERTPS):
+        case WRAP(EXTRACTPS):
+        case WRAP(MPSADBW):
+        case WRAP(PHMINPOSUW):
+        case WRAP(PMULLD):
+        case WRAP(PMULDQ):
+        case WRAP(PBLENDVB):
+        case WRAP(PBLENDW):
+        case WRAP(PMINSB):
+        case WRAP(PMINUW):
+        case WRAP(PMINSD):
+        case WRAP(PMINUD):
+        case WRAP(PMAXSB):
+        case WRAP(PMAXUW):
+        case WRAP(PMAXSD):
+        case WRAP(PMAXUD):
+        case WRAP(PEXTRB):
+        case WRAP(PEXTRD):
+        case WRAP(PEXTRQ):
+        case WRAP(PINSRB):
+        case WRAP(PINSRD):
+        case WRAP(PINSRQ):
+        case WRAP(PMOVSXBW):
+        case WRAP(PMOVZXBW):
+        case WRAP(PMOVSXBD):
+        case WRAP(PMOVZXBD):
+        case WRAP(PMOVSXBQ):
+        case WRAP(PMOVZXBQ):
+        case WRAP(PMOVSXWD):
+        case WRAP(PMOVZXWD):
+        case WRAP(PMOVSXWQ):
+        case WRAP(PMOVZXWQ):
+        case WRAP(PMOVSXDQ):
+        case WRAP(PMOVZXDQ):
+        case WRAP(PTEST):
+        case WRAP(PCMPEQQ):
+        case WRAP(PACKUSDW):
+        case WRAP(MOVNTDQA):
+        case WRAP(ANDN):
+        case WRAP(MOVBE):
+        case WRAP(PCMPESTRI):
+        case WRAP(PCMPESTRM):
+        case WRAP(PCMPISTRI):
+        case WRAP(PCMPISTRM):
+        case WRAP(PCLMULQDQ):
+        case WRAP(AESDEC):
+        case WRAP(AESDECLAST):
+        case WRAP(AESENC):
+        case WRAP(AESENCLAST):
+        case WRAP(AESIMC):
+        case WRAP(AESKEYGENASSIST):
+
+        case WRAP(MOVDQ2Q):
+        case WRAP(MOVMSKPD):
+        case WRAP(MOVMSKPS):
+        case WRAP(MOVNTDQ):
+        case WRAP(MOVNTI):
+        case WRAP(MOVNTPD):
+        case WRAP(MOVNTPS):
+        case WRAP(MOVNTQ):
+        case WRAP(MOVQ2DQ):
+        case WRAP(PMOVMSKB):
+        case WRAP(MASKMOVQ):
+        case WRAP(MASKMOVDQU):
+        case WRAP(MOVUPD):
+        case WRAP(MOVDQA):
+        case WRAP(MOVDQU):
+        case WRAP(MOVUPS):
+        case WRAP(MOVAPD):
+        case WRAP(LDDQU):
+        case WRAP(MOVAPS):
+        case WRAP(MOVHLPS):
+        case WRAP(MOVSHDUP):
+        case WRAP(MOVSLDUP):
+        case WRAP(MOVLHPS):
+        case WRAP(MOVSD):
+        case WRAP(MOVSS):
+        case WRAP(MOVHPD):
+        case WRAP(MOVHPS):
+        case WRAP(MOVLPD):
+        case WRAP(MOVLPS):
+        case WRAP(MOVDDUP):
+
+        case WRAP(PSLLW):
+        case WRAP(PSLLD):
+        case WRAP(PSLLQ):
+        case WRAP(PSRLW):
+        case WRAP(PSRLD):
+        case WRAP(PSRLQ):
+        case WRAP(PSRAW):
+        case WRAP(PSRAD):
+        case WRAP(PSLLDQ):
+        case WRAP(PSRLDQ):
+        case WRAP(ADDSUBPD):
+        case WRAP(ADDSUBPS):
+
+        case WRAP(SHA1NEXTE):
+        case WRAP(SHA1MSG1):
+        case WRAP(SHA1MSG2):
+        case WRAP(SHA1RNDS4):
+        case WRAP(SHA256RNDS2):
+        case WRAP(SHA256MSG1):
+        case WRAP(SHA256MSG2):
+        
+        case WRAP(CVTDQ2PD):
+        case WRAP(CVTDQ2PS):
+        case WRAP(CVTTPS2DQ):
+        case WRAP(CVTTPD2DQ):
+        case WRAP(CVTPD2DQ):
+        case WRAP(CVTPS2DQ):
+        case WRAP(CVTPD2PI):
+        case WRAP(CVTTPD2PI):
+        case WRAP(CVTPD2PS):
+        case WRAP(CVTPI2PS):
+        case WRAP(CVTPI2PD):
+        case WRAP(CVTPS2PI):
+        case WRAP(CVTTPS2PI):
+        case WRAP(CVTSD2SS):
+        case WRAP(CVTSI2SD):
+        case WRAP(CVTSI2SS):
+        case WRAP(CVTSS2SD):
+        case WRAP(CVTPS2PD):
+        case WRAP(CVTSD2SI):
+        case WRAP(CVTSS2SI):
+        case WRAP(CVTTSD2SI):
+        case WRAP(CVTTSS2SI):
+
+        case WRAP(PCMPEQB):
+        case WRAP(PCMPEQW):
+        case WRAP(PCMPEQD):
+        case WRAP(PCMPGTB):
+        case WRAP(PCMPGTW):
+        case WRAP(PCMPGTD):
+        case WRAP(PCMPGTQ):
+        case WRAP(CMPPD):
+        case WRAP(CMPPS):
+        case WRAP(CMPSS):
+        case WRAP(COMISD):
+        case WRAP(COMISS):
+        case WRAP(UCOMISD):
+        case WRAP(UCOMISS):
+        case WRAP(CMPSD):
+
+        case WRAP(SETO):
+        case WRAP(SETNO):
+        case WRAP(SETC):
+        case WRAP(SETNC):
+        case WRAP(SETZ):
+        case WRAP(SETNZ):
+        case WRAP(SETBE):
+        case WRAP(SETNBE):
+        case WRAP(SETS):
+        case WRAP(SETNS):
+        case WRAP(SETP):
+        case WRAP(SETNP):
+        case WRAP(SETL):
+        case WRAP(SETNL):
+        case WRAP(SETLE):
+        case WRAP(SETNLE):
+        case WRAP(TZCNT):
+        case WRAP(BSF):
+        case WRAP(BSR):
+        case WRAP(LZCNT):
+
+        case WRAP(POP):
+        case WRAP(PUSH):
+        case WRAP(MOV):
+        case WRAP(MOV_CR):
+        case WRAP(MOV_DR):
+        case WRAP(MOVZX):
+        case WRAP(MOVSX):
+        case WRAP(MOVSXD):
+        case WRAP(MOVS):
+        case WRAP(STOS):
+        case WRAP(LODS):
+        case WRAP(CMPS):
+        case WRAP(SCAS):
+        case WRAP(CMOVNBE):
+        case WRAP(CMOVNC):
+        case WRAP(CMOVC):
+        case WRAP(CMOVBE):
+        case WRAP(CMOVZ):
+        case WRAP(CMOVNLE):
+        case WRAP(CMOVNL):
+        case WRAP(CMOVL):
+        case WRAP(CMOVLE):
+        case WRAP(CMOVNZ):
+        case WRAP(CMOVO):
+        case WRAP(CMOVNO):
+        case WRAP(CMOVP):
+        case WRAP(CMOVNP):
+        case WRAP(CMOVS):
+        case WRAP(CMOVNS):
+        case WRAP(LEA):
+        case WRAP(XCHG):
+        case WRAP(CMPXCHG):
+        case WRAP(CMPXCHG8B):
+        case WRAP(CMPXCHG16B):
+        case WRAP(MOVQ):
+        case WRAP(MOVD):
+        case WRAP(PUSHA):
+        case WRAP(PUSHAD):
+        case WRAP(POPA):
+        case WRAP(POPAD):
+        case WRAP(POPCNT):
+
+        case WRAP(XOR):
+        case WRAP(AND):
+        case WRAP(TEST):
+        case WRAP(OR):
+        case WRAP(NOT):
+        case WRAP(SHL):
+        case WRAP(SHR):
+        case WRAP(SAL):
+        case WRAP(SAR):
+        case WRAP(ROL):
+        case WRAP(ROR):
+        case WRAP(RORX):
+        case WRAP(RCL):
+        case WRAP(RCR):
+        case WRAP(SHRD):
+        case WRAP(SHLD):
+        case WRAP(BSWAP):
+        case WRAP(SHRX):
+        case WRAP(SHLX):
+        case WRAP(SARX):
+
+        case WRAP(JBE):
+        case WRAP(JC):
+        case WRAP(JL):
+        case WRAP(JLE):
+        case WRAP(JNBE):
+        case WRAP(JNC):
+        case WRAP(JNL):
+        case WRAP(JNLE):
+        case WRAP(JNO):
+        case WRAP(JNP):
+        case WRAP(JNS):
+        case WRAP(JNZ):
+        case WRAP(JO):
+        case WRAP(JP):
+        case WRAP(JS):
+        case WRAP(JZ):
+        case WRAP(JrCXZ):
+
+        case WRAP(RSSSP):
+        // case WRAP():
+
+
 
         /* code */
         return true;
@@ -758,14 +1138,14 @@ bool tr_opt_simm12_bd(IR1_INST *ir1)
 void ir1_make_ins_JMP_bd(IR1_INST *ir1, ADDRX addr, int32 off)
 {
     uint8_t code[5];
-    code[0] = 0xE9;
-    memcpy(&code[1], &off, 4);
+    code[0] = 0xEB; code[1] = 0xFE;
+    // memcpy(&code[1], &off, 4);
 
-    ((INSTRUX *)(ir1->info))->InstructionBytes[0] = 0x69;
-    *(int32_t *)(((INSTRUX *)(ir1->info))->InstructionBytes + 1) = off;
-    ir1->address = (uint64_t)addr;
-    ((INSTRUX *)(ir1->info))->Length = 5;
-    ir1_disasm_bd(ir1, code, addr, 1, NULL);
+    // ((INSTRUX *)(ir1->info))->InstructionBytes[0] = 0x69;
+    // *(int32_t *)(((INSTRUX *)(ir1->info))->InstructionBytes + 1) = off;
+    // ir1->address = (uint64_t)addr;
+    // ((INSTRUX *)(ir1->info))->Length = 5;
+    ir1_disasm(ir1, code, addr, 1, NULL);
 }
 
 int ir1_opnd_index_reg_num_bd(IR1_OPND_BD *opnd)

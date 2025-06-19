@@ -306,7 +306,7 @@ IR1_INST *get_ir1_list(struct TranslationBlock *tb, ADDRX pc, int max_insns)
         } else {
             IR1_OPND_BD *opnd1 = ir1_get_opnd_bd(insert_ir1, 1);
             if (ir1_opnd_type_bd(opnd1) == ND_OP_MEM &&
-                ir1_opnd_base_reg_bd(opnd1) == NDR_ESP &&
+                (ir1_opnd_has_base_bd(opnd1) && ir1_opnd_base_reg_bd(opnd1) == NDR_ESP) &&
                 ir1_opnd_simm_bd(opnd1) == 0) {
                 IR1_OPND_BD *opnd0 = ir1_get_opnd_bd(insert_ir1, 0);
                 int reg_index = ir1_opnd_base_reg_num_bd(opnd0);
@@ -2108,6 +2108,70 @@ static void tr_check_x86ins_change(struct TranslationBlock *tb)
 }
 #endif
 
+bool if_reduce_proepo(IR1_OPCODE_BD opcode)
+{
+    switch (opcode)
+    {
+    case ND_INS_F2XM1:
+    case ND_INS_WAIT:
+    case ND_INS_FADD:
+    case ND_INS_FADDP:
+    case ND_INS_FBLD:
+    case ND_INS_FBSTP:
+    case ND_INS_FCOM:
+    case ND_INS_FCOMI:
+    case ND_INS_FCOMIP:
+    case ND_INS_FCOMP:
+    case ND_INS_FCOMPP:
+    case ND_INS_FCOS:
+    case ND_INS_FDIV:
+    case ND_INS_FDIVP:
+    case ND_INS_FDIVR:
+    case ND_INS_FDIVRP:
+    case ND_INS_FIADD:
+    case ND_INS_FICOM:
+    case ND_INS_FICOMP:
+    case ND_INS_FIDIV:
+    case ND_INS_FIDIVR:
+    case ND_INS_FIMUL:
+    case ND_INS_FISTTP:
+    case ND_INS_FISUB:
+    case ND_INS_FISUBR:
+    case ND_INS_FMUL:
+    case ND_INS_FMULP:
+    case ND_INS_FNOP:
+    case ND_INS_FPATAN:
+    case ND_INS_FPREM1:
+    case ND_INS_FPREM:
+    case ND_INS_FPTAN:
+    case ND_INS_FRNDINT:
+    case ND_INS_FSCALE:
+    // case ND_INS_FSETPM:
+    case ND_INS_FSIN:
+    case ND_INS_FSINCOS:
+    case ND_INS_FSQRT:
+    case ND_INS_FSUB:
+    case ND_INS_FSUBP:
+    case ND_INS_FSUBR:
+    case ND_INS_FSUBRP:
+    case ND_INS_FTST:
+    case ND_INS_FUCOM:
+    case ND_INS_FUCOMI:
+    case ND_INS_FUCOMIP:
+    case ND_INS_FUCOMP:
+    case ND_INS_FUCOMPP:
+    case ND_INS_FXRSTOR:
+    case ND_INS_FXSAVE:
+    case ND_INS_FXTRACT:
+    case ND_INS_FYL2X:
+    case ND_INS_FYL2XP1:
+        return true;
+    
+    default:
+        return false;
+    }
+}
+
 int tr_ir2_generate(struct TranslationBlock *tb)
 {
     int i;
@@ -2327,8 +2391,8 @@ int tr_ir2_generate(struct TranslationBlock *tb)
 #endif
 
             if (option_softfpu == 2 && !reduce_proepo) {
-                tr_func_idx = ir1_opcode_bd(pir1) - ND_INS_INVALID;
-                if (ND_INS_F2XM1 <= tr_func_idx && tr_func_idx <= ND_INS_FYL2XP1) {
+                // tr_func_idx = ir1_opcode_bd(pir1) - ND_INS_INVALID;
+                if (if_reduce_proepo(ir1_opcode_bd(pir1))) {
                     reduce_proepo = true;
                     gen_softfpu_helper_prologue_bd(pir1);
                 }
@@ -2357,8 +2421,8 @@ int tr_ir2_generate(struct TranslationBlock *tb)
                         }
                     }
                 } else {
-                    tr_func_idx = ir1_opcode_bd(pir1_next) - ND_INS_INVALID;
-                    if (tr_func_idx > ND_INS_FYL2XP1 || tr_func_idx < ND_INS_F2XM1) {
+                    // tr_func_idx = ir1_opcode_bd(pir1_next) - ND_INS_INVALID;
+                    if (!if_reduce_proepo(ir1_opcode_bd(pir1_next))) {
                         reduce_proepo = false;
                         if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
                             gen_softfpu_helper_epilogue(pir1);

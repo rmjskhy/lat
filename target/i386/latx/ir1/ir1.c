@@ -1791,7 +1791,7 @@ void ir1_set_eflag_use(IR1_INST *ir1, uint8_t use) { ir1->_eflag_use = use; }
 void ir1_set_eflag_def(IR1_INST *ir1, uint8_t def) { ir1->_eflag_def = def; }
 
 void ir1_make_ins_JMP(IR1_INST *ir1, ADDRX addr, int32 off)
-{
+{ir1->decode_engine = OPT_DECODE_BY_CAPSTONE;
     struct la_dt_insn *info = ir1->info;
 
     info->bytes[0] = 0x69;

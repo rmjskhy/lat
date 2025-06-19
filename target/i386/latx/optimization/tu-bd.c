@@ -24,7 +24,7 @@ void get_last_info_bd(TranslationBlock *tb, IR1_INST* pir1)
     tb->s_data->next_pc = ir1_addr_next_bd(pir1);
 
     if (ir1_is_branch_bd(pir1)) {
-        if (likely(ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0)))) {
+        if (likely(ir1_opnd_is_offs_bd(ir1_get_opnd_bd(pir1, 0)))) {
             tb->s_data->last_ir1_type = (int8)IR1_TYPE_BRANCH;
             tb->s_data->target_pc = ir1_target_addr_bd(pir1);
         } else {

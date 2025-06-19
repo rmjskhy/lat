@@ -660,4 +660,37 @@ int ir1_opmode_bd(IR1_INST *ir1)
     const unsigned char opnd_size[3] = { 2, 4, 8 };
     return opnd_size[((INSTRUX *)(ir1->info))->OpMode];
 }
+inline __attribute__ ((always_inline))
+void set_ir1_opnd_size_bd(IR1_OPND_BD *opnd, uint32_t size)
+{
+    switch (opnd->Type)
+    {
+        case ND_OP_REG:
+            opnd->Info.Register.Size = size;
+            break;
+        case ND_OP_MEM:
+            opnd->Size = size;
+            break;
+        case ND_OP_IMM:
+            opnd->Size = size;
+            break;
+        case ND_OP_OFFS:
+            opnd->Info.RelativeOffset.RawSize = size;
+            break;
+        case ND_OP_ADDR_FAR:
+            opnd->Size = size;
+            break;
+        default:
+            lsassertm(0, "unsupport operand type\n");
+            break;
+    }
+    return;
+}
+inline __attribute__ ((always_inline))
+void set_ir1_opnd_base_reg_bd(IR1_OPND_BD *opnd, uint32_t reg)
+{
+    lsassert(ir1_opnd_is_reg_bd(opnd));
+    opnd->Info.Register.Reg = reg;
+    return;
+}
 #endif
