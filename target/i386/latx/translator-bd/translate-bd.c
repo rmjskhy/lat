@@ -774,7 +774,9 @@ bool ir1_translate_bd(IR1_INST *ir1)
     }
 
     if (translate_functions[tr_func_idx] == NULL) {
+#ifdef CONFIG_LATX_DEBUG
         ir1_opcode_dump_bd(ir1);
+#endif
 #ifndef CONFIG_LATX_TU
         lsassertm(0, "%s %s %d error : this ins %d not implemented: %s\n",
             __FILE__, __func__, __LINE__, tr_func_idx, ((INSTRUX *)(ir1->info))->Mnemonic);

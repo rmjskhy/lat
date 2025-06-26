@@ -482,16 +482,16 @@ void generate_eflag_calculation_bd(IR2_OPND dest, IR2_OPND src0, IR2_OPND src1,
         ir1_get_eflag_def_bd(pir1) & (~(lsenv->tr_data->curr_ir1_skipped_eflags));
     switch (ir1_opcode_bd(pir1)) {
     case WRAP(COMISS):
-        generate_xcomisx(src0, src1, false, true, use_flags);
+        generate_xcomisx_bd(src0, src1, false, true, use_flags);
         return;
     case WRAP(COMISD):
-        generate_xcomisx(src0, src1, true, true, use_flags);
+        generate_xcomisx_bd(src0, src1, true, true, use_flags);
         return;
     case WRAP(UCOMISS):
-        generate_xcomisx(src0, src1, false, false, use_flags);
+        generate_xcomisx_bd(src0, src1, false, false, use_flags);
         return;
     case WRAP(UCOMISD):
-        generate_xcomisx(src0, src1, true, false, use_flags);
+        generate_xcomisx_bd(src0, src1, true, false, use_flags);
         return;
     default:
         break;

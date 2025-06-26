@@ -72,6 +72,32 @@ i386_ss.add(when: 'CONFIG_LATX', if_true: files(
   'latx-signal.c',
 ))
 
+
+bddisasm_lib = static_library('bddisasm',
+        build_by_default: true,
+        sources: files('bddisasm/bddisasm.c'),
+        include_directories: include_directories('include/', 'include/bddisasm'))
+
+if ('CONFIG_BDDISASM_NO_MNEMONIC' in config_host)
+    bddisasm_noprint = declare_dependency(
+        link_args: [meson.current_source_dir() + '/exlib/libbddisasm.a']
+    )
+    bddisasm = declare_dependency(link_with: bddisasm_lib,
+        link_with: bddisasm_lib,
+        dependencies: bddisasm_noprint,
+        include_directories: include_directories('include/'))
+else
+    bddisasm_print = declare_dependency(
+        link_args: [meson.current_source_dir() + '/exlib/libbddisasm-print.a']
+    )
+    bddisasm = declare_dependency(link_with: bddisasm_lib,
+        link_with: bddisasm_lib,
+        dependencies: bddisasm_print,
+        include_directories: include_directories('include/'))
+endif
+
+i386_ss.add(bddisasm)
+
 laxed_lib = static_library('laxed',
                          build_by_default: false,
                          sources: files('latx-disassemble-trace/xed.c'),
@@ -96,28 +122,11 @@ i386_ss.add(when: 'CONFIG_LATX_DEBUG', if_true: lazydis)
 i386_ss.add(when: 'CONFIG_LATX_DEBUG', if_true: files(
   'latx-disassemble-trace/latx-disassemble-trace.c',
 ))
+# i386_ss.add(laxed)
 
 if cs_latx_debug or cs_git
     i386_ss.add(when: 'CONFIG_LATX', if_true: capstone_git)
 endif
-
-
-bddisasm_lib = static_library('bddisasm',
-        build_by_default: true,
-        sources: files('bddisasm/bddisasm.c'),
-        include_directories: include_directories('include/', 'include/bddisasm'))
-
-if ('CONFIG_BDDISASM_NO_MNEMONIC' in config_host)
-    bddisasm = declare_dependency(link_with: bddisasm_lib,
-        link_args: ['-L' + meson.current_source_dir() + '/extlib', '-lbddisasm'],
-        include_directories: include_directories('include/'))
-else
-    bddisasm = declare_dependency(link_with: bddisasm_lib,
-        link_args: ['-L' + meson.current_source_dir() + '/extlib', '-lbddisasm-print'],
-        include_directories: include_directories('include/'))
-endif
-
-i386_ss.add(bddisasm)
 
 
 r = run_command('python3', 'convert.py', check: true)

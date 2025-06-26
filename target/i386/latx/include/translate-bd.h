@@ -110,7 +110,9 @@ void generate_eflag_calculation_bd(IR2_OPND, IR2_OPND, IR2_OPND, IR1_INST *, boo
 int8 get_etb_type_bd(IR1_INST *pir1);
 #endif
 
-
+#ifdef CONFIG_LATX_XCOMISX_OPT
+void generate_xcomisx(IR2_OPND, IR2_OPND, bool, bool, uint8_t);
+#endif
 
 #include "insts-pattern.h"
 

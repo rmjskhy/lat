@@ -800,7 +800,7 @@ bool translate_cmppd_bd(IR1_INST *pir1)
 #define OASF_USEDEF_BIT (OF_USEDEF_BIT | AF_USEDEF_BIT | SF_USEDEF_BIT)
 #define OASF_BIT        (OF_BIT | AF_BIT | SF_BIT)
 
-void generate_xcomisx(IR2_OPND src0, IR2_OPND src1, bool is_double,
+void generate_xcomisx_bd(IR2_OPND src0, IR2_OPND src1, bool is_double,
                       bool qnan_exp, uint8_t eflags)
 {
     lsassert(!(eflags & ~(ZPCF_USEDEF_BIT | OASF_USEDEF_BIT)));

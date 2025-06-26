@@ -577,11 +577,12 @@ int ir1_opnd_base_reg_num_bd(const IR1_OPND_BD *opnd);
 
 int ir1_dump_bd(IR1_INST *ir1);
 int ir1_opcode_dump_bd(IR1_INST *ir1);
+#ifdef CONFIG_LATX_DEBUG
 inline __attribute__ ((always_inline))
 const char * ir1_name_bd(IR1_INST *inst){
     return ((INSTRUX *)(inst->info))->Mnemonic;
 }
-
+#endif
 
 bool ir1_need_calculate_of_bd(IR1_INST *ir1);
 bool ir1_need_calculate_cf_bd(IR1_INST *ir1);
