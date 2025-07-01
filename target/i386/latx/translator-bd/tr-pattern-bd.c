@@ -27,7 +27,7 @@ static bool translate_cmp_jcc(IR1_INST *ir1)
     IR1_INST *curr = ir1;
     IR1_INST *next = ir1->instptn.next;
 
-    curr->info->id = WRAP(CMP);
+    ((INSTRUX *)(curr->info))->Instruction = WRAP(CMP);
 
     int em = ZERO_EXTENSION;
     switch (ir1_opcode_bd(next)) {
@@ -287,7 +287,7 @@ static bool translate_sub_jcc(IR1_INST *ir1)
     IR2_OPND dest, mem_opnd;
     int imm, opnd0_size;
 
-    curr->info->id = WRAP(SUB);
+    ((INSTRUX *)(curr->info))->Instruction = WRAP(SUB);
     opnd0_size = ir1_opnd_size_bd(opnd0);
 
     bool is_lock = ir1_is_prefix_lock_bd(ir1) && ir1_opnd_is_mem_bd(opnd0);
@@ -405,16 +405,16 @@ static inline bool xcomisx_jcc(IR1_INST *ir1, bool is_double, bool qnan_exp)
     if (is_double) {
         la_fcmp = la_fcmp_cond_d;
         if (qnan_exp) {
-            curr->info->id = WRAP(COMISD);
+            ((INSTRUX *)(curr->info))->Instruction = WRAP(COMISD);
         } else {
-            curr->info->id = WRAP(UCOMISD);
+            ((INSTRUX *)(curr->info))->Instruction = WRAP(UCOMISD);
         }
     } else {
         la_fcmp = la_fcmp_cond_s;
         if (qnan_exp) {
-            curr->info->id = WRAP(COMISS);
+            ((INSTRUX *)(curr->info))->Instruction = WRAP(COMISS);
         } else {
-            curr->info->id = WRAP(UCOMISS);
+            ((INSTRUX *)(curr->info))->Instruction = WRAP(UCOMISS);
         }
     }
 
@@ -567,7 +567,7 @@ static bool translate_bt_jcc(IR1_INST *ir1)
     IR1_INST *curr = ir1;
     IR1_INST *next = ir1->instptn.next;
 
-    curr->info->id = WRAP(BT);
+    ((INSTRUX *)(curr->info))->Instruction = WRAP(BT);
     IR1_OPND_BD *bt_opnd0 = ir1_get_opnd_bd(curr, 0);
     IR1_OPND_BD *bt_opnd1 = ir1_get_opnd_bd(curr, 1);
     IR2_OPND src_opnd_0, src_opnd_1, bit_offset;
@@ -725,7 +725,7 @@ static bool translate_cqo_idiv(IR1_INST *ir1)
         lsassert(0);
     } else {
         IR2_OPND src_opnd_1 =
-            load_ireg_from_ir1_bd(&rax_ir1_opnd, SIGN_EXTENSION, false);
+            load_ireg_from_ir1_bd(&rax_ir1_opnd_bd, SIGN_EXTENSION, false);
         IR2_OPND temp_src = ra_alloc_itemp();
         IR2_OPND temp1_opnd = ra_alloc_itemp();
 
@@ -734,8 +734,8 @@ static bool translate_cqo_idiv(IR1_INST *ir1)
         la_mod_d(temp1_opnd, temp_src, src_opnd_0);
         la_div_d(temp_src, temp_src, src_opnd_0);
 
-        store_ireg_to_ir1_bd(temp_src, &rax_ir1_opnd, false);
-        store_ireg_to_ir1_bd(temp1_opnd, &rdx_ir1_opnd, false);
+        store_ireg_to_ir1_bd(temp_src, &rax_ir1_opnd_bd, false);
+        store_ireg_to_ir1_bd(temp1_opnd, &rdx_ir1_opnd_bd, false);
 
         ra_free_temp(temp_src);
         ra_free_temp(temp1_opnd);
@@ -753,7 +753,7 @@ static bool translate_cmp_sbb(IR1_INST *ir1)
     IR1_OPND_BD *cmp_opnd0 = ir1_get_opnd_bd(curr, 0);
     IR1_OPND_BD *cmp_opnd1 = ir1_get_opnd_bd(curr, 1);
 
-    bool cmp_opnd1_is_imm = ir1_opnd_is_simm12(cmp_opnd1);
+    bool cmp_opnd1_is_imm = ir1_opnd_is_simm12_bd(cmp_opnd1);
 
     IR2_OPND cmp_opnd_0 = load_ireg_from_ir1_bd(cmp_opnd0, SIGN_EXTENSION, false);
     IR2_OPND cmp_opnd_1;
@@ -775,7 +775,7 @@ static bool translate_cmp_sbb(IR1_INST *ir1)
     }
 
     /* we need change to sub because sbb uses CF (not calculate) */
-    next->info->id = WRAP(SUB);
+    ((INSTRUX *)(next->info))->Instruction = WRAP(SUB);
     generate_eflag_calculation_bd(zero_ir2_opnd, zero_ir2_opnd, cond, next, true);
 
     la_sub_d(cond, zero_ir2_opnd, cond);
@@ -1024,26 +1024,26 @@ static bool translate_xor_div(IR1_INST *ir1)
     IR2_OPND temp1_opnd = ra_alloc_itemp();
     if (ir1_opnd_size_bd(ir1_get_opnd_bd(next, 0)) == 32) {
         IR2_OPND src_opnd_1 =
-            load_ireg_from_ir1_bd(&eax_ir1_opnd, ZERO_EXTENSION, false);
+            load_ireg_from_ir1_bd(&eax_ir1_opnd_bd, ZERO_EXTENSION, false);
         la_or(temp_src, zero_ir2_opnd, zero_ir2_opnd);
         la_or(temp_src, zero_ir2_opnd, src_opnd_1);
 
         la_mod_du(temp1_opnd, temp_src, src_opnd_0);
         la_div_du(temp_src, temp_src, src_opnd_0);
 
-        store_ireg_to_ir1_bd(temp_src, &eax_ir1_opnd, false);
-        store_ireg_to_ir1_bd(temp1_opnd, &edx_ir1_opnd, false);
+        store_ireg_to_ir1_bd(temp_src, &eax_ir1_opnd_bd, false);
+        store_ireg_to_ir1_bd(temp1_opnd, &edx_ir1_opnd_bd, false);
     } else if (ir1_opnd_size_bd(ir1_get_opnd_bd(next, 0)) == 64) {
         IR2_OPND src_opnd_1 =
-            load_ireg_from_ir1_bd(&rax_ir1_opnd, ZERO_EXTENSION, false);
+            load_ireg_from_ir1_bd(&rax_ir1_opnd_bd, ZERO_EXTENSION, false);
 
         la_or(temp_src, zero_ir2_opnd, src_opnd_1);
 
         la_mod_du(temp1_opnd, temp_src, src_opnd_0);
         la_div_du(temp_src, temp_src, src_opnd_0);
 
-        store_ireg_to_ir1_bd(temp_src, &rax_ir1_opnd, false);
-        store_ireg_to_ir1_bd(temp1_opnd, &rdx_ir1_opnd, false);
+        store_ireg_to_ir1_bd(temp_src, &rax_ir1_opnd_bd, false);
+        store_ireg_to_ir1_bd(temp1_opnd, &rdx_ir1_opnd_bd, false);
     } else {
         lsassert(0);
     }
@@ -1069,7 +1069,7 @@ static bool translate_cdq_idiv(IR1_INST *ir1)
         lsassert(0);
     } else {
         IR2_OPND src_opnd_1 =
-            load_ireg_from_ir1_bd(&eax_ir1_opnd, SIGN_EXTENSION, false);
+            load_ireg_from_ir1_bd(&eax_ir1_opnd_bd, SIGN_EXTENSION, false);
         IR2_OPND temp_src = ra_alloc_itemp();
         IR2_OPND temp1_opnd = ra_alloc_itemp();
 
@@ -1078,8 +1078,8 @@ static bool translate_cdq_idiv(IR1_INST *ir1)
         la_mod_d(temp1_opnd, temp_src, src_opnd_0);
         la_div_d(temp_src, temp_src, src_opnd_0);
 
-        store_ireg_to_ir1_bd(temp_src, &eax_ir1_opnd, false);
-        store_ireg_to_ir1_bd(temp1_opnd, &edx_ir1_opnd, false);
+        store_ireg_to_ir1_bd(temp_src, &eax_ir1_opnd_bd, false);
+        store_ireg_to_ir1_bd(temp1_opnd, &edx_ir1_opnd_bd, false);
 
         ra_free_temp(temp_src);
         ra_free_temp(temp1_opnd);
@@ -2044,7 +2044,7 @@ static inline bool xcomisx_xx_jcc(IR1_INST *pir1, bool is_jcc, bool is_double, b
         IR2_OPND dest = load_freg128_from_ir1_bd(opnd0);
         IR2_OPND src = load_freg128_from_ir1_bd(opnd1);
         
-        translate_xcomisx(curr);
+        translate_xcomisx_bd(curr);
         
         IR2_INST* (*la_fcmp)(IR2_OPND, IR2_OPND, IR2_OPND, int);
         if (is_double) {

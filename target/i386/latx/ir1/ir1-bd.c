@@ -7,6 +7,7 @@
 #include "latx-options.h"
 #include "latx-disassemble-trace.h"
 #include "labddisasm.h"
+#include "insts-pattern.h"
 
 IR1_OPND_BD al_ir1_opnd_bd;
 IR1_OPND_BD ah_ir1_opnd_bd;
@@ -269,7 +270,7 @@ static void __attribute__((__constructor__)) x86tomisp_ir1_init_bd(void)
 }
 
 bool debug_with_dis(const uint8_t *addr)
-{return false;
+{return true;
     INSTRUX info;
     NDSTATUS status;
 #if TARGET_ABI_BITS == 64
@@ -894,9 +895,9 @@ ADDRX ir1_disasm_bd(IR1_INST *ir1, uint8_t *addr, ADDRX t_pc, int ir1_num, void 
 
     ir1->_eflag = 0;
 
-#ifdef LATXS_INSTPTN_ENABLE
+#ifdef CONFIG_LATX_INSTS_PATTERN
     ir1->instptn.opc  = INSTPTN_OPC_NONE;
-    ir1->instptn.next = -1;
+    ir1->instptn.next = NULL;
 #endif
 
     return (ADDRX)((uint64_t)t_pc + info->Length);
