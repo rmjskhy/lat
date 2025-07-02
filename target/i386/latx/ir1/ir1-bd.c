@@ -1070,8 +1070,8 @@ static int ir1_opnd_get_reg_num_bd(ND_REG_TYPE reg_type, ND_REG_SIZE reg_size, N
 int ir1_opnd_base_reg_num_bd(const IR1_OPND_BD *opnd)                      
 {
     // xtm : base may not a mem opnd
-    lsassert((opnd->Type == ND_OP_MEM && opnd->Info.Memory.HasBase == true)
-            || opnd->Type == ND_OP_REG);
+    if (opnd->Type == ND_OP_MEM && opnd->Info.Memory.HasBase == false)
+        return -1;
 
     if (opnd->Type == ND_OP_MEM) {
         return ir1_opnd_get_reg_num_bd(ND_REG_GPR, opnd->Info.Memory.BaseSize,
