@@ -1358,8 +1358,9 @@ static bool translate_fild_softfpu_bd(IR1_INST *pir1)
             la_clz_d(itemp1, itemp1);
             li_d(itemp2, 12);
             la_bge(itemp1, itemp2, label_hard);
-
+            gen_softfpu_helper_prologue_bd(pir1);
             gen_softfpu_helper2m_64((ADDR)helper_fildll_ST0, mem_opnd);
+            gen_softfpu_helper_epilogue_bd(pir1);
             la_b(label_exit);
 
             la_label(label_hard);
