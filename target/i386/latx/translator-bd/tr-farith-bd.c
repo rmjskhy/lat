@@ -554,7 +554,7 @@ bool translate_fcos_bd(IR1_INST *pir1)
     return true;
 }
 
-static double pi = +3.141592653589793239;
+// double pi = +3.141592653589793239;
 
 bool translate_fpatan_bd(IR1_INST *pir1)
 {
@@ -1246,11 +1246,11 @@ bool translate_fisttp_bd(IR1_INST *pir1)
     tr_fpu_pop();
     return true;
 }
-bool translate_fsetpm_bd(IR1_INST *pir1)
-{
-    fprintf(stderr, "%s not implemented. translation failed.\n", __FUNCTION__);
-    return false;
-}
+// bool translate_fsetpm_bd(IR1_INST *pir1)
+// {
+//     fprintf(stderr, "%s not implemented. translation failed.\n", __FUNCTION__);
+//     return false;
+// }
 bool translate_fbld_bd(IR1_INST *pir1)
 {
     IR1_OPND_BD *opnd0 = ir1_get_opnd_bd(pir1, 1);

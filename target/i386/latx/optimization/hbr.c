@@ -740,10 +740,7 @@ static void init_xmm_state(uint32_t xmm[XMM_NUM])
 
 #include "tu.h"
 typedef bool (*xmm_analyse_func)(TranslationBlock *, IR1_INST *, uint32_t *);
-extern bool xmm_analyse_32_bd(TranslationBlock *tb,
-        IR1_INST *ir1, uint32_t xmm[XMM_NUM]);
-bool xmm_analyse_64_bd(TranslationBlock *tb,
-        IR1_INST *ir1, uint32_t xmm[XMM_NUM]);
+
 /* static int xcount, scount, ncount; */
 static void tb_xmm_analyse(TranslationBlock *tb,
         xmm_analyse_func analyse_func, uint32_t *xmm)

@@ -883,7 +883,7 @@ ADDRX ir1_disasm_bd(IR1_INST *ir1, uint8_t *addr, ADDRX t_pc, int ir1_num, void 
                 info->Operands[i].Info.Memory.HasSeg = false;
         }
     }
-    ir1->info = info;
+    ir1->info = (struct la_dt_insn*)info;
     ir1->decode_engine = OPT_DECODE_BY_BDDISASM;
     ir1->address = t_pc;
 
@@ -1065,6 +1065,8 @@ static int ir1_opnd_get_reg_num_bd(ND_REG_TYPE reg_type, ND_REG_SIZE reg_size, N
         lsassertm(0, "unsupport reg type\n");
         break;
     }
+    lsassert(0);
+    return -1;
 }
 
 int ir1_opnd_base_reg_num_bd(const IR1_OPND_BD *opnd)                      

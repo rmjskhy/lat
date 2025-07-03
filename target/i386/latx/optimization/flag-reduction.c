@@ -375,25 +375,36 @@ static bool flag_reduction_pass1(void *tb)
     /* scanning if this insts will def ALL_EFLAGS */
     for (int i = tb_ir1_num(ptb) - 1; i >= 0; --i) {
         pir1 = tb_ir1_inst(ptb, i);
-        IR1_EFLAG_USEDEF *usedef = NULL;
         if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
-            usedef = ir1_opcode_to_eflag_usedef(pir1);
+            const IR1_EFLAG_USEDEF *usedef = ir1_opcode_to_eflag_usedef(pir1);
+            /*
+            * NOTE: if you find some insts will use ALL_EFLAGS
+            * you can add this case:
+            * if (usedef->use == __ALL_EFLAGS) return false;
+            */
+            if (usedef->use != __NONE) {
+                goto _false_path;
+            } else if (usedef->def == __NONE) {
+                /* curr_inst not def any flags */
+                continue;
+            } else {
+                break;
+            }
         } else {
-            usedef = ir1_opcode_to_eflag_usedef_bd(pir1);
-        }
-
-        /*
-         * NOTE: if you find some insts will use ALL_EFLAGS
-         * you can add this case:
-         * if (usedef->use == __ALL_EFLAGS) return false;
-         */
-        if (usedef->use != __NONE) {
-            goto _false_path;
-        } else if (usedef->def == __NONE) {
-            /* curr_inst not def any flags */
-            continue;
-        } else {
-            break;
+            const IR1_EFLAG_USEDEF *usedef = ir1_opcode_to_eflag_usedef_bd(pir1);
+            /*
+            * NOTE: if you find some insts will use ALL_EFLAGS
+            * you can add this case:
+            * if (usedef->use == __ALL_EFLAGS) return false;
+            */
+            if (usedef->use != __NONE) {
+                goto _false_path;
+            } else if (usedef->def == __NONE) {
+                /* curr_inst not def any flags */
+                continue;
+            } else {
+                break;
+            }
         }
     }
 #ifdef CONFIG_LATX_PROFILER

@@ -46,7 +46,7 @@ typedef int scan_elem_t;
 void insts_pattern_scan_con(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 bool insts_pattern_scan_jcc_end(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 
-void insts_pattern_scan_con_bd_bd(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
+void insts_pattern_scan_con_bd(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir1_index, scan_elem_t *scan);
 
 

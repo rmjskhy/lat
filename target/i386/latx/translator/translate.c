@@ -6,6 +6,7 @@
 #include "fpu/softfloat.h"
 #include "profile.h"
 #include "translate.h"
+#include "translate-bd.h"
 #include "runtime-trace.h"
 #include "exec/translate-all.h"
 #include "ir2-relocate.h"
@@ -2108,7 +2109,7 @@ static void tr_check_x86ins_change(struct TranslationBlock *tb)
 }
 #endif
 
-bool if_reduce_proepo(IR1_OPCODE_BD opcode)
+static bool if_reduce_proepo(IR1_OPCODE_BD opcode)
 {
     switch (opcode)
     {

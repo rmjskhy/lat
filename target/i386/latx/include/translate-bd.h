@@ -103,15 +103,23 @@ void load_ireg_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1,
                                    EXTENSION_MODE em, bool is_xmm_hi);
 bool si12_overflow_bd(long si12);
 int have_scq_bd(void);
-void gen_softfpu_helper_prologue_bd(IR1_INST *pir1);
 void generate_eflag_calculation_bd(IR2_OPND, IR2_OPND, IR2_OPND, IR1_INST *, bool);
+void tr_fpu_store_tag_to_mem_bd(IR2_OPND mem_opnd, int mem_imm);
+void tr_fpu_load_tag_to_env_bd(IR2_OPND fpu_tag);
+void update_sw_by_fcsr_bd(IR2_OPND sw_opnd);
+void update_fcsr_by_cw_bd(IR2_OPND cw);
+void update_fcsr_by_sw_bd(IR2_OPND sw);
+void helper_raise_syscall_bd(void);
+void helper_raise_int_bd(void);
+void restore_h128_of_ymm_bd(IR1_INST *ir1, IR2_OPND temp);
+IR2_OPND save_h128_of_ymm_bd(IR1_INST *ir1);
 #if defined(CONFIG_LATX_FLAG_REDUCTION) && \
     defined(CONFIG_LATX_FLAG_REDUCTION_EXTEND)
 int8 get_etb_type_bd(IR1_INST *pir1);
 #endif
 
 #ifdef CONFIG_LATX_XCOMISX_OPT
-void generate_xcomisx(IR2_OPND, IR2_OPND, bool, bool, uint8_t);
+void generate_xcomisx_bd(IR2_OPND, IR2_OPND, bool, bool, uint8_t);
 #endif
 
 #include "insts-pattern.h"

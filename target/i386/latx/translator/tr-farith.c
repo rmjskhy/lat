@@ -725,7 +725,7 @@ bool translate_fcos(IR1_INST *pir1)
     return true;
 }
 
-static double pi = +3.141592653589793239;
+double pi = +3.141592653589793239;
 
 bool translate_fpatan(IR1_INST *pir1)
 {

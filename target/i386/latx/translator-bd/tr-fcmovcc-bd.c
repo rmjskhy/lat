@@ -3,7 +3,7 @@
 #include "flag-lbt-bd.h"
 #include "translate-bd.h"
 
-bool translate_fcmovcc_bd(IR1_INST *pir1)
+static bool translate_fcmovcc_bd(IR1_INST *pir1)
 {
     IR1_OPND_BD *opnd1 = ir1_get_opnd_bd(pir1, 1);
     IR2_OPND cond = ra_alloc_itemp();

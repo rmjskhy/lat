@@ -91,7 +91,7 @@ static bool translate_cmp_jcc(IR1_INST *ir1)
         TranslationBlock *tb = lsenv->tr_data->curr_tb;
         tu_jcc_nop_gen(tb);
         la_label(target_label_opnd);
-        tb->jmp_target_arg[0] = target_label_opnd._label_id;
+        /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
         tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
         if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
             IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -104,7 +104,8 @@ static bool translate_cmp_jcc(IR1_INST *ir1)
 
         IR2_OPND unlink_label_opnd = ra_alloc_label();
         la_label(unlink_label_opnd);
-        tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+        tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+        set_use_tu_jmp(tb);
 
         IR2_OPND target_label_opnd2 = ra_alloc_label();
         switch (ir1_opcode_bd(next)) {
@@ -345,7 +346,7 @@ static bool translate_sub_jcc(IR1_INST *ir1)
         TranslationBlock *tb = lsenv->tr_data->curr_tb;
         tu_jcc_nop_gen(tb);
         la_label(target_label_opnd);
-        tb->jmp_target_arg[0] = target_label_opnd._label_id;
+        /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
         tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
         if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
             IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -357,7 +358,8 @@ static bool translate_sub_jcc(IR1_INST *ir1)
         }
         IR2_OPND unlink_label_opnd = ra_alloc_label();
         la_label(unlink_label_opnd);
-        tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+        tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+        set_use_tu_jmp(tb);
         IR2_OPND target_label_opnd2 = ra_alloc_label();
         jcc_gen_bcc_bd(bcc_src0, bcc_src1, target_label_opnd2, next);
         tr_generate_exit_tb_bd(next, 0);
@@ -468,7 +470,7 @@ static inline bool xcomisx_jcc(IR1_INST *ir1, bool is_double, bool qnan_exp)
         TranslationBlock *tb = lsenv->tr_data->curr_tb;
         tu_jcc_nop_gen(tb);
         la_label(target_label_opnd);
-        tb->jmp_target_arg[0] = target_label_opnd._label_id;
+        /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
         tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
         if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
             IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -481,7 +483,8 @@ static inline bool xcomisx_jcc(IR1_INST *ir1, bool is_double, bool qnan_exp)
 
         IR2_OPND unlink_label_opnd = ra_alloc_label();
         la_label(unlink_label_opnd);
-        tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+        tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+        set_use_tu_jmp(tb);
 
         IR2_OPND target_label_opnd2 = ra_alloc_label();
         switch (ir1_opcode_bd(next)) {
@@ -642,7 +645,7 @@ static bool translate_bt_jcc(IR1_INST *ir1)
         TranslationBlock *tb = lsenv->tr_data->curr_tb;
         tu_jcc_nop_gen(tb);
         la_label(target_label_opnd);
-        tb->jmp_target_arg[0] = target_label_opnd._label_id;
+        /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
         tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
         if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
             IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -655,7 +658,8 @@ static bool translate_bt_jcc(IR1_INST *ir1)
 
         IR2_OPND unlink_label_opnd = ra_alloc_label();
         la_label(unlink_label_opnd);
-        tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+        tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+        set_use_tu_jmp(tb);
 
         IR2_OPND target_label_opnd2 = ra_alloc_label();
         switch (ir1_opcode_bd(next)) {
@@ -891,10 +895,10 @@ static bool translate_test_jcc(IR1_INST *ir1)
         tu_jcc_nop_gen(tb);
         la_label(target_label_opnd);
         if (is_branch) {
-            tb->jmp_target_arg[0] = target_label_opnd._label_id;
+            /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
             tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
         } else {
-            tb->jmp_target_arg[0] = TB_JMP_RESET_OFFSET_INVALID;
+            /*tb->jmp_target_arg[0] = TB_JMP_RESET_OFFSET_INVALID;*/
             tb->tu_jmp[TU_TB_INDEX_TARGET] = TB_JMP_RESET_OFFSET_INVALID;
         }
         if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
@@ -908,7 +912,8 @@ static bool translate_test_jcc(IR1_INST *ir1)
 
         IR2_OPND unlink_label_opnd = ra_alloc_label();
         la_label(unlink_label_opnd);
-        tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+        tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+        set_use_tu_jmp(tb);
 
         IR2_OPND target_label_opnd2 = ra_alloc_label();
         switch (ir1_opcode_bd(next)) {
@@ -1562,7 +1567,7 @@ bool translate_cmp_xx_jcc(IR1_INST *pir1)
             TranslationBlock *tb = lsenv->tr_data->curr_tb;
             tu_jcc_nop_gen(tb);
             la_label(target_label_opnd);
-            tb->jmp_target_arg[0] = target_label_opnd._label_id;
+            /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
             tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
             if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
                 IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -1575,7 +1580,8 @@ bool translate_cmp_xx_jcc(IR1_INST *pir1)
 
             IR2_OPND unlink_label_opnd = ra_alloc_label();
             la_label(unlink_label_opnd);
-            tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+            tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+            set_use_tu_jmp(tb);
 
             IR2_OPND target_label_opnd2 = ra_alloc_label();
             switch (ir1_opcode_bd(pir1)) {
@@ -1771,10 +1777,10 @@ bool translate_test_xx_jcc(IR1_INST *pir1)
             tu_jcc_nop_gen(tb);
             la_label(target_label_opnd);
             if (is_branch) {
-                tb->jmp_target_arg[0] = target_label_opnd._label_id;
+                /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
                 tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
             } else {
-                tb->jmp_target_arg[0] = TB_JMP_RESET_OFFSET_INVALID;
+                /*tb->jmp_target_arg[0] = TB_JMP_RESET_OFFSET_INVALID;*/
                 tb->tu_jmp[TU_TB_INDEX_TARGET] = TB_JMP_RESET_OFFSET_INVALID;
             }
             if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
@@ -1788,7 +1794,8 @@ bool translate_test_xx_jcc(IR1_INST *pir1)
 
             IR2_OPND unlink_label_opnd = ra_alloc_label();
             la_label(unlink_label_opnd);
-            tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+            tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+            set_use_tu_jmp(tb);
 
             IR2_OPND target_label_opnd2 = ra_alloc_label();
             switch (ir1_opcode_bd(pir1)) {
@@ -1982,7 +1989,7 @@ bool translate_bt_xx_jcc(IR1_INST *pir1)
             TranslationBlock *tb = lsenv->tr_data->curr_tb;
             tu_jcc_nop_gen(tb);
             la_label(target_label_opnd);
-            tb->jmp_target_arg[0] = target_label_opnd._label_id;
+            /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
             tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
             if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
                 IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -1995,7 +2002,8 @@ bool translate_bt_xx_jcc(IR1_INST *pir1)
 
             IR2_OPND unlink_label_opnd = ra_alloc_label();
             la_label(unlink_label_opnd);
-            tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+            tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+            set_use_tu_jmp(tb);
 
             IR2_OPND target_label_opnd2 = ra_alloc_label();
             switch (ir1_opcode_bd(curr)) {
@@ -2102,7 +2110,7 @@ static inline bool xcomisx_xx_jcc(IR1_INST *pir1, bool is_jcc, bool is_double, b
         TranslationBlock *tb = lsenv->tr_data->curr_tb;
         tu_jcc_nop_gen(tb);
         la_label(target_label_opnd);
-        tb->jmp_target_arg[0] = target_label_opnd._label_id;
+        /*tb->jmp_target_arg[0] = target_label_opnd._label_id;*/
         tb->tu_jmp[TU_TB_INDEX_TARGET] = tu_reset_label_opnd._label_id;
         if (tb->tu_jmp[TU_TB_INDEX_NEXT] != TB_JMP_RESET_OFFSET_INVALID) {
             IR2_OPND translated_label_opnd = ra_alloc_label();
@@ -2115,7 +2123,8 @@ static inline bool xcomisx_xx_jcc(IR1_INST *pir1, bool is_jcc, bool is_double, b
 
         IR2_OPND unlink_label_opnd = ra_alloc_label();
         la_label(unlink_label_opnd);
-        tb->tu_unlink_stub_offset = unlink_label_opnd._label_id;
+        tb->tu_unlink.stub_offset = unlink_label_opnd._label_id;
+        set_use_tu_jmp(tb);
 
         IR2_OPND target_label_opnd2 = ra_alloc_label();
         if (ir1_opcode_bd(curr) == WRAP(JNL)) {

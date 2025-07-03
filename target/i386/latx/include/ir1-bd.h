@@ -390,6 +390,7 @@ int ir1_opnd_has_seg_bd(IR1_OPND_BD *opnd)
         return 1;
     }
     lsassert(0);
+    return -1;
 }
 inline __attribute__ ((always_inline))
 int ir1_opnd_get_seg_index_bd(IR1_OPND_BD *opnd)
@@ -401,6 +402,7 @@ int ir1_opnd_get_seg_index_bd(IR1_OPND_BD *opnd)
         return opnd->Info.Address.BaseSeg;
     }
     lsassert(0);
+    return -1;
 }
 inline __attribute__ ((always_inline))
 IR1_PREFIX_BD ir1_prefix_bd(IR1_INST *ir1) { return ((INSTRUX *)(ir1->info))->Rep; }

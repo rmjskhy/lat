@@ -391,7 +391,7 @@ bool translate_movzx_bd(IR1_INST *pir1)
     if (ir1_opnd_type_bd(source_ir1) == ND_OP_MEM &&
         source_ir1->Info.Memory.HasSeg == false &&
         source_ir1->Info.Memory.HasBase == false) {
-            source_ir1->Info.Memory.HasSeg == true;
+            source_ir1->Info.Memory.HasSeg = true;
         // source_ir1->mem.segment == dt_X86_REG_INVALID &&
         // source_ir1->mem.base == dt_X86_REG_INVALID){
         // source_ir1->mem.segment = dt_X86_REG_DS;
