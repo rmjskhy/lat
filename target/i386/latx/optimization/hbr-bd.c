@@ -10,7 +10,7 @@
 #include "reg-alloc.h"
 #include "latx-options.h"
 
-#ifdef CONFIG_LATX_HBR
+#if defined(CONFIG_LATX_HBR) && defined(CONFIG_LATX_TU)
 
 #define WRAP(ins) (ND_INS_##ins)
 
@@ -888,7 +888,7 @@ static void over_tb_shbr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu,
     /* } */
 }
 
-static void do_shbr_opt32_bd(TranslationBlock **tb_list, int tb_num_in_tu)
+__attribute__((unused)) static void do_shbr_opt32_bd(TranslationBlock **tb_list, int tb_num_in_tu)
 {
     uint32_t xmm[tb_num_in_tu][XMM_NUM];
     for (int i = 0; i < tb_num_in_tu; i++) {
@@ -900,7 +900,7 @@ static void do_shbr_opt32_bd(TranslationBlock **tb_list, int tb_num_in_tu)
     over_tb_shbr_opt_bd(tb_list, tb_num_in_tu, SHBR_CAN_OPT32, xmm);
 }
 
-static void do_shbr_opt64_bd(TranslationBlock **tb_list, int tb_num_in_tu)
+__attribute__((unused)) static void do_shbr_opt64_bd(TranslationBlock **tb_list, int tb_num_in_tu)
 {
     uint32_t xmm[tb_num_in_tu][XMM_NUM];
     for (int i = 0; i < tb_num_in_tu; i++) {
@@ -912,7 +912,7 @@ static void do_shbr_opt64_bd(TranslationBlock **tb_list, int tb_num_in_tu)
     over_tb_shbr_opt_bd(tb_list, tb_num_in_tu, SHBR_CAN_OPT64, xmm);
 }
 
-static void clear_ir1_flag_bd(TranslationBlock **tb_list, int tb_num_in_tu)
+__attribute__((unused)) static void clear_ir1_flag_bd(TranslationBlock **tb_list, int tb_num_in_tu)
 {
     for (int i = 0; i < tb_num_in_tu; i++) {
         TranslationBlock *tb = tb_list[i];
@@ -1249,8 +1249,8 @@ static void get_gpr_use_def_bd(TranslationBlock *tb)
     tb->s_data->gpr_out = 0;
     tb->s_data->gpr_in = 0;
     IR1_INST *ir1;
-    for (int i = 0; i < tb_ir1_num(tb); ++i) {
-        ir1 = tb_ir1_inst(tb, i);
+    for (int i = 0; i < tb_ir1_num_bd(tb); ++i) {
+        ir1 = tb_ir1_inst_bd(tb, i);
         ir1->gpr_def = 0;
         ir1->gpr_use = 0;
         def_h32_bd(tb, ir1);
@@ -1258,7 +1258,7 @@ static void get_gpr_use_def_bd(TranslationBlock *tb)
     }
 }
 
-static void do_gpr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu)
+__attribute__((unused)) static void do_gpr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu)
 {
     for (int i = 0; i < tb_num_in_tu; i++) {
         get_gpr_use_def_bd(tb_list[i]);
@@ -1267,7 +1267,8 @@ static void do_gpr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu)
 }
 #endif
 
-void hbr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu)
+#ifndef CONFIG_LATX_DECODE_DEBUG
+void hbr_opt(TranslationBlock **tb_list, int tb_num_in_tu)
 {
     clear_ir1_flag_bd(tb_list, tb_num_in_tu);
     do_shbr_opt32_bd(tb_list, tb_num_in_tu);
@@ -1276,6 +1277,7 @@ void hbr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu)
     do_gpr_opt_bd(tb_list, tb_num_in_tu);
 #endif
 }
+#endif
 
 bool can_shbr_opt64_bd(IR1_INST *ir1)
 {

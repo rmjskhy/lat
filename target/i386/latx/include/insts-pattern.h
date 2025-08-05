@@ -43,8 +43,10 @@
 
 typedef int scan_elem_t;
 
+#ifdef CONFIG_LATX_DECODE_DEBUG
 void insts_pattern_scan_con(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 bool insts_pattern_scan_jcc_end(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
+#endif
 
 void insts_pattern_scan_con_bd(TranslationBlock *tb, IR1_INST *ir1, int index, scan_elem_t *scan_buf);
 bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir1_index, scan_elem_t *scan);
@@ -56,6 +58,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
         __attribute__((unused)) scan_elem_t _prex##_scaned_cond[INSTPTN_BUF_SIZE] = {-1, -1, -1, -1}; \
         __attribute__((unused)) scan_elem_t _prex##_scaned_jcc_end[1] = {-1}; \
         __attribute__((unused)) bool scan_head = true;
+#ifdef CONFIG_LATX_DECODE_DEBUG
 #define OPT_INSTS_PTN(tb, inst, index, _prex) \
         do { \
             if (option_instptn) { \
@@ -73,7 +76,17 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 } \
             } \
         } while (0)
-
+#else
+#define OPT_INSTS_PTN(tb, inst, index, _prex) \
+        do { \
+            if (option_instptn) { \
+                insts_pattern_scan_con_bd(tb, inst, index, _prex##_scaned_cond); \
+                if (scan_head) {  \
+                    scan_head = insts_pattern_scan_jcc_end_bd(tb, inst, index, _prex##_scaned_jcc_end); \
+                } \
+            } \
+        } while (0)
+#endif
 #else /* !CONFIG_LATX_INSTS_PATTERN */
 
 #define DEF_INSTS_PTN(_prex)        ((void)0)

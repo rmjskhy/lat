@@ -98,6 +98,9 @@ IR1_OPND_BD rsi_mem16_ir1_opnd_bd;
 IR1_OPND_BD rdi_mem16_ir1_opnd_bd;
 IR1_OPND_BD esi_mem64_ir1_opnd_bd;
 IR1_OPND_BD edi_mem64_ir1_opnd_bd;
+extern int GPR_USEDEF_TO_SAVE;
+extern int FPR_USEDEF_TO_SAVE;
+extern int XMM_USEDEF_TO_SAVE;
 #endif
 
 static IR1_OPND_BD ir1_opnd_new_static_reg_bd(int size, ND_UINT32 reg, ND_UINT8 ishigh8)
@@ -269,8 +272,9 @@ static void __attribute__((__constructor__)) x86tomisp_ir1_init_bd(void)
 #endif
 }
 
+#ifdef CONFIG_LATX_DECODE_DEBUG
 bool debug_with_dis(const uint8_t *addr)
-{return true;
+{return false;
     INSTRUX info;
     NDSTATUS status;
 #if TARGET_ABI_BITS == 64
@@ -865,18 +869,18 @@ bool debug_with_dis(const uint8_t *addr)
     }
 #undef WRAP
 }
+#endif
 
 ADDRX ir1_disasm_bd(IR1_INST *ir1, uint8_t *addr, ADDRX t_pc, int ir1_num, void *pir1_base)
 {
     INSTRUX *info;
+    int count;
+    if (!CODEIS64) {
+        count = labddisasm_get_32(addr, 15, &info, ir1_num, pir1_base);
+    } else {
+        count = labddisasm_get_64(addr, 15, &info, ir1_num, pir1_base);
+    }
 
-#if TARGET_ABI_BITS == 32
-    int count = labddisasm_get_32(addr, 15, &info, ir1_num, pir1_base);
-#elif TARGET_ABI_BITS == 64
-    int count = labddisasm_get_64(addr, 15, &info, ir1_num, pir1_base);
-#else
-#error "disasm mode err"
-#endif
     if (!info->HasSeg) {
         for (int i = 0; i < info->ExpOperandsCount; i++) {
             if(info->Operands[i].Type == ND_OP_MEM)
@@ -884,7 +888,9 @@ ADDRX ir1_disasm_bd(IR1_INST *ir1, uint8_t *addr, ADDRX t_pc, int ir1_num, void 
         }
     }
     ir1->info = (struct la_dt_insn*)info;
+#if defined(CONFIG_LATX_DECODE_DEBUG) || defined(CONFIG_LATX_DEBUG)
     ir1->decode_engine = OPT_DECODE_BY_BDDISASM;
+#endif
     ir1->address = t_pc;
 
     /* Disasm error */
@@ -978,7 +984,7 @@ int ir1_opnd_is_gpr_used_bd(IR1_OPND_BD *opnd, uint8 gpr_index)
     } else if (ir1_opnd_is_mem_bd(opnd)) {
         if (ir1_opnd_has_base_bd(opnd)) {
 #ifdef TARGET_X86_64
-            if (opnd->Info.Memory.IsRipRel) {
+            if (CODEIS64 && opnd->Info.Memory.IsRipRel) {
                 return 0;
             }
 #endif
@@ -1138,7 +1144,7 @@ bool tr_opt_simm12_bd(IR1_INST *ir1)
 #endif
 }
 
-void ir1_make_ins_JMP_bd(IR1_INST *ir1, ADDRX addr, int32 off)
+void ir1_make_ins_JMP_bd(IR1_INST *ir1, ADDRX addr)
 {
     uint8_t code[5];
     code[0] = 0xEB; code[1] = 0xFE;
@@ -1148,7 +1154,7 @@ void ir1_make_ins_JMP_bd(IR1_INST *ir1, ADDRX addr, int32 off)
     // *(int32_t *)(((INSTRUX *)(ir1->info))->InstructionBytes + 1) = off;
     // ir1->address = (uint64_t)addr;
     // ((INSTRUX *)(ir1->info))->Length = 5;
-    ir1_disasm(ir1, code, addr, 1, NULL);
+    ir1_disasm_bd(ir1, code, addr, 1, NULL);
 }
 
 int ir1_opnd_index_reg_num_bd(IR1_OPND_BD *opnd)

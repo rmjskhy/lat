@@ -11,8 +11,8 @@ bool translate_pcmpeqb_bd(IR1_INST *pir1)
         IR2_OPND src = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 1));
         la_vseq_b(dest, dest, src);
     } else { //mmx
-        /* transfer_to_mmx_mode */
-        transfer_to_mmx_mode();
+        /* transfer_to_mmx_mode_bd */
+        transfer_to_mmx_mode_bd();
 
         IR2_OPND dest_lo =
             load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 0), false, IS_INTEGER);
@@ -30,8 +30,8 @@ bool translate_pcmpeqw_bd(IR1_INST *pir1)
         IR2_OPND src = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 1));
         la_vseq_h(dest, dest, src);
     } else { //mmx
-        /* transfer_to_mmx_mode */
-        transfer_to_mmx_mode();
+        /* transfer_to_mmx_mode_bd */
+        transfer_to_mmx_mode_bd();
 
         IR2_OPND dest_lo =
             load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 0), false, IS_INTEGER);
@@ -49,8 +49,8 @@ bool translate_pcmpeqd_bd(IR1_INST *pir1)
         IR2_OPND src = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 1));
         la_vseq_w(dest, dest, src);
     } else { //mmx
-        /* transfer_to_mmx_mode */
-        transfer_to_mmx_mode();
+        /* transfer_to_mmx_mode_bd */
+        transfer_to_mmx_mode_bd();
 
         IR2_OPND dest_lo =
             load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 0), false, IS_INTEGER);
@@ -69,8 +69,8 @@ bool translate_pcmpgtb_bd(IR1_INST *pir1)
         la_vslt_b(dest, src, dest);
         return true;
     } else {
-        /* transfer_to_mmx_mode */
-        transfer_to_mmx_mode();
+        /* transfer_to_mmx_mode_bd */
+        transfer_to_mmx_mode_bd();
 
         IR2_OPND dest_lo =
             load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 0), false, IS_INTEGER);
@@ -89,8 +89,8 @@ bool translate_pcmpgtw_bd(IR1_INST *pir1)
         la_vslt_h(dest, src, dest);
         return true;
     }
-    /* transfer_to_mmx_mode */
-    transfer_to_mmx_mode();
+    /* transfer_to_mmx_mode_bd */
+    transfer_to_mmx_mode_bd();
 
     IR2_OPND dest_lo =
         load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 0), false, IS_INTEGER);
@@ -108,8 +108,8 @@ bool translate_pcmpgtd_bd(IR1_INST *pir1)
         la_vslt_w(dest, src, dest);
         return true;
     }
-    /* transfer_to_mmx_mode */
-    transfer_to_mmx_mode();
+    /* transfer_to_mmx_mode_bd */
+    transfer_to_mmx_mode_bd();
 
     IR2_OPND dest_lo =
         load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 0), false, IS_INTEGER);

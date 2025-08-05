@@ -1,5 +1,8 @@
 i386_ss.add(when: 'CONFIG_LATX', if_true: files(
+  'macro-helper-bd.c',
   'mem-interface-bd.c',
+  'reg-alloc-bd.c',
+  'runtime-trace-bd.c',
   'tr-adx-bd.c',
   'tr-arith-bd.c',
   'tr-bmi-bd.c',
@@ -26,5 +29,5 @@ i386_ss.add(when: 'CONFIG_LATX', if_true: files(
   'tr-simd-shift-bd.c',
   'tr-softfpu-bd.c',
   'translate-bd.c',
-  
+
 ))

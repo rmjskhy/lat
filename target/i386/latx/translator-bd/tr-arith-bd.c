@@ -329,7 +329,7 @@ bool translate_add_bd(IR1_INST *pir1)
         dest = src0;
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -344,7 +344,7 @@ bool translate_add_bd(IR1_INST *pir1)
         la_add_d(dest, src0, src1);
     }
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -402,7 +402,7 @@ bool translate_adc_bd(IR1_INST *pir1)
         src0 = ra_alloc_itemp();
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -410,7 +410,7 @@ bool translate_adc_bd(IR1_INST *pir1)
     /* calculate */
     la_adc_d(dest, src0, src1);
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -469,7 +469,7 @@ bool translate_inc_bd(IR1_INST *pir1)
         dest = src0;
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -484,10 +484,14 @@ bool translate_inc_bd(IR1_INST *pir1)
 #ifndef TARGET_X86_64
     la_addi_w(dest, src0, 1);
 #else
-    la_addi_d(dest, src0, 1);
+    if (CODEIS64) {
+        la_addi_d(dest, src0, 1);
+    } else {
+        la_addi_w(dest, src0, 1);
+    }
 #endif
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -546,7 +550,7 @@ bool translate_dec_bd(IR1_INST *pir1)
         dest = src0;
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -561,10 +565,14 @@ bool translate_dec_bd(IR1_INST *pir1)
 #ifndef TARGET_X86_64
     la_addi_w(dest, src0, -1);
 #else
-    la_addi_d(dest, src0, -1);
+    if (CODEIS64) {
+        la_addi_d(dest, src0, -1);
+    } else {
+        la_addi_w(dest, src0, -1);
+    }
 #endif
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -640,7 +648,7 @@ bool translate_sub_bd(IR1_INST *pir1)
         dest = src0;
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -655,7 +663,7 @@ bool translate_sub_bd(IR1_INST *pir1)
         la_sub_d(dest, src0, src1);
     }
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -719,7 +727,7 @@ bool translate_sbb_bd(IR1_INST *pir1)
         src0 = ra_alloc_itemp();
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -727,7 +735,7 @@ bool translate_sbb_bd(IR1_INST *pir1)
     /* calculate */
     la_sbc_d(dest, src0, src1);
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -789,7 +797,7 @@ bool translate_neg_bd(IR1_INST *pir1)
         dest = src0;
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -800,7 +808,7 @@ bool translate_neg_bd(IR1_INST *pir1)
     /* calculate */
     la_sub_d(dest, zero_ir2_opnd, src0);
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -928,7 +936,7 @@ static bool translate_imul_1_opnd_bd(IR1_INST *pir1)
      *   IMUL r/m64     < mul{h}.d temp, reg1, reg2/temp1
      */
 #ifdef TARGET_X86_64
-    if (src_size == 64) {
+    if (CODEIS64 && src_size == 64) {
         /*
          * IMUL r/m64     < mul{h}.d temp, reg1, reg2/temp1
          */
@@ -1102,7 +1110,7 @@ static bool translate_imul_(IR1_INST *pir1,
         }
         generate_eflag_calculation_bd(dest_ir2, src0_ir2, src1_ir2, pir1, true);
 #ifdef TARGET_X86_64
-        if (dest_size == 64) {
+        if (CODEIS64 && dest_size == 64) {
             /* 1.1. IMUL r{64}, r{64}, r{64} */
             /* -> mul.d reg1, reg2, reg3 */
             /* 2.1. IMUL r{64}, r{64}, imm{8,32}/m{64} */
@@ -1125,7 +1133,7 @@ static bool translate_imul_(IR1_INST *pir1,
         /* 3. IMUL r{32,64}, m{32,64}, imm{8,32} */
         lsassert(ir1_opnd_is_mem_bd(src0) && ir1_opnd_is_imm_bd(src1));
 #ifdef TARGET_X86_64
-        if (dest_size == 64) {
+        if (CODEIS64 && dest_size == 64) {
             /* 3.1. IMUL r{64}, m{64}, imm{8,32} */
             /* -> mul.d reg1, temp, temp */
             dest_ir2 = ra_alloc_gpr(ir1_opnd_base_reg_num_bd(dest));
@@ -1655,7 +1663,7 @@ bool translate_xadd_bd(IR1_INST *pir1)
         dest = ra_alloc_itemp();
         mem_opnd = convert_mem_bd(opnd0, &imm);
         if (is_lock) {
-            lat_lock_addr = tr_lat_spin_lock_bd(mem_opnd, imm);
+            lat_lock_addr = tr_lat_spin_lock(mem_opnd, imm);
         }
         la_ld_by_op_size(src0, mem_opnd, imm, opnd0_size);
     }
@@ -1669,7 +1677,7 @@ bool translate_xadd_bd(IR1_INST *pir1)
     }
     la_add_d(dest, src0, src1);
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(pir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif
@@ -1702,7 +1710,11 @@ bool translate_mulx_bd(IR1_INST *pir1)
     IR2_OPND dest1 = load_ireg_from_ir1_bd(opnd1, UNKNOWN_EXTENSION, false);
     IR2_OPND src0 = load_ireg_from_ir1_bd(opnd2, UNKNOWN_EXTENSION, false);
 #ifdef TARGET_X86_64
-    IR2_OPND src1 = load_ireg_from_ir1_bd(&rdx_ir1_opnd_bd, ZERO_EXTENSION, false);
+    IR1_OPND_BD *opndselect = &edx_ir1_opnd_bd;
+    if (CODEIS64) {
+        opndselect = &rdx_ir1_opnd_bd;
+    }
+    IR2_OPND src1 = load_ireg_from_ir1_bd(opndselect, ZERO_EXTENSION, false);
 #else
     IR2_OPND src1 = load_ireg_from_ir1_bd(&edx_ir1_opnd_bd, ZERO_EXTENSION, false);
 #endif

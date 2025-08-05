@@ -8,13 +8,15 @@
 #include "common.h"
 #include "ir1-bd.h"
 
-#ifdef CONFIG_LATX_HBR
+#if defined(CONFIG_LATX_HBR) && defined(CONFIG_LATX_TU)
 #define SHBR_NTYPE    0x1
 #define SHBR_STYPE    0x2
 #define SHBR_PTYPE    0x4
 #define SHBR_SSE      0x8
 
-void hbr_opt_bd(TranslationBlock **tb_list, int tb_num_in_tu);
+#ifndef CONFIG_LATX_DECODE_DEBUG
+void hbr_opt(TranslationBlock **tb_list, int tb_num_in_tu);
+#endif
 /* void tb_xmm_analyse(TranslationBlock *tb); */
 uint8_t get_inst_type_bd(IR1_INST *ir1);
 bool can_shbr_opt64_bd(IR1_INST *ir1);

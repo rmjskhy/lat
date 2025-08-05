@@ -102,8 +102,8 @@ bool translate_movntq_bd(IR1_INST *pir1)
         return true;
     }
 
-    /* transfer_to_mmx_mode */
-    transfer_to_mmx_mode();
+    /* transfer_to_mmx_mode_bd */
+    transfer_to_mmx_mode_bd();
 
     IR2_OPND src_lo =
         load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 1), false, IS_INTEGER);
@@ -172,7 +172,11 @@ bool translate_maskmovq_bd(IR1_INST *pir1)
     IR2_OPND mem_data = ra_alloc_ftemp();
     IR2_OPND xmm_data = ra_alloc_ftemp();
 #ifndef TARGET_X86_64
-       la_bstrpick_d(base_opnd, base_opnd, 31, 0);
+    la_bstrpick_d(base_opnd, base_opnd, 31, 0);
+#else
+    if(!CODEIS64) {
+        la_bstrpick_d(base_opnd, base_opnd, 31, 0);
+    }
 #endif
     la_fld_d(mem_data, base_opnd, 0);
     la_vand_v(xmm_data, src, temp_mask);
@@ -194,6 +198,10 @@ bool translate_maskmovdqu_bd(IR1_INST *pir1)
     IR2_OPND base_opnd = ra_alloc_gpr(edi_index);
 #ifndef TARGET_X86_64
     la_bstrpick_d(base_opnd, base_opnd, 31, 0);
+#else
+    if(!CODEIS64) {
+        la_bstrpick_d(base_opnd, base_opnd, 31, 0);
+    }
 #endif
     IR2_OPND temp_mask = ra_alloc_ftemp();
     la_vandi_b(temp_mask, mask, 0x80);

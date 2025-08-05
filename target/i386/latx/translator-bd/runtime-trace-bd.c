@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "ir1.h"
-#include "lsenv.h"
 
 #define TRACE_REG_STACK_OFFSET 0x10
 
@@ -23,10 +22,10 @@ static size_t trace_save_regs[] = {
    la_s5, la_s6, la_s7, la_s8,
 };
 
-extern __thread size_t last_x86_info_size;
-extern __thread struct store_x86_infos last_x86_info;
+__thread size_t last_x86_info_size;
+__thread struct store_x86_infos last_x86_info;
 
-static void diff_printf(const char *format, uint64_t current, uint64_t last)
+__attribute__((unused)) static void diff_printf(const char *format, uint64_t current, uint64_t last)
 {
     if (current != last) {
         /* red highlight */
@@ -38,59 +37,28 @@ static void diff_printf(const char *format, uint64_t current, uint64_t last)
     }
 }
 
-static void print_disass(const uint8_t *bin, size_t length)
+__attribute__((unused)) static void print_disass(uint8_t *bin, size_t length)
 {
-    cs_insn *insn;
     IR1_INST ir1;
-#ifdef TARGET_X86_64
-#ifdef CONFIG_LATX_CAPSTONE_GIT
-    int count = latx_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#else
-    int count = la_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#endif
-#else
-#ifdef CONFIG_LATX_CAPSTONE_GIT
-    int count = latx_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#else
-    int count = la_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#endif
-#endif
+    int count = ir1_disasm_bd(&ir1, bin, 0, 1, NULL);
     if (count) {
         printf("[");
         for (int i = 0; i < length; i++) {
             printf(" %02x", bin[i]);
         }
-        printf("]\n %s\t%s\n", insn[0].mnemonic, insn[0].op_str);
+#ifdef CONFIG_LATX_DEBUG
+        printf("]\n %s\t%s\n", ir1_name_bd(&ir1), ir1_get_op_str_bd(&ir1));
+#endif
     }
 }
 
-static bool is_branch(const uint8_t *bin, size_t length)
+#ifndef CONFIG_LATX_DECODE_DEBUG
+static bool is_branch(uint8_t *bin, size_t length)
 {
-    cs_insn *insn;
     IR1_INST ir1 = {0};
-#ifdef TARGET_X86_64
-#ifdef CONFIG_LATX_CAPSTONE_GIT
-    int count = latx_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#else
-    int count = la_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#endif
-#else
-#ifdef CONFIG_LATX_CAPSTONE_GIT
-    int count = latx_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#else
-    int count = la_cs_disasm(handle[CODEIS64], bin, length,
-        (uint64_t)0, 1, &insn, 1, &ir1);
-#endif
-#endif
-    if (count && ir1.info && (ir1_is_jump(&ir1) || ir1_is_branch(&ir1)
-        || ir1_is_call(&ir1) || ir1_is_return(&ir1))) {
+    int count = ir1_disasm_bd(&ir1, bin, 0, 1, NULL);
+    if (count && ir1.info && (ir1_is_jump_bd(&ir1) || ir1_is_branch_bd(&ir1)
+        || ir1_is_call_bd(&ir1) || ir1_is_return_bd(&ir1))) {
         return true;
     }
     return false;
@@ -220,8 +188,9 @@ void trace_session_begin(uint64_t ins_length, uint64_t reg_store_addr,
 {
     trace_session(ins_length, reg_store_addr, eip, mem_access_count, CONTEXT_IN);
 }
+#endif
 
-static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
+__attribute__((unused)) static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
 {
     int i = 0;
 #ifdef TARGET_X86_64
@@ -252,22 +221,10 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     }
 
     uint64_t mem_access_count = 0;
-#ifdef CONFIG_LATX_DECODE_DEBUG
-    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
-        for (int j = 0; j < pir1->info->x86.op_count; j++) {
-            IR1_OPND *opnd = ir1_get_opnd(pir1, j);
-            if (ir1_opnd_is_mem(opnd)) {
-                mem_access_count++;
-            }
-        }
-    } else
-#endif
-    {
-        for (int j = 0; j < ir1_get_opnd_num_bd(pir1); j++) {
-            IR1_OPND_BD *opnd = ir1_get_opnd_bd(pir1, j);
-            if (ir1_opnd_is_mem_bd(opnd)) {
-                mem_access_count++;
-            }
+    for (int j = 0; j < ir1_get_opnd_num_bd(pir1); j++) {
+        IR1_OPND_BD *opnd = ir1_get_opnd_bd(pir1, j);
+        if (ir1_opnd_is_mem_bd(opnd)) {
+            mem_access_count++;
         }
     }
     /* store eflags as last reg */
@@ -284,14 +241,7 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     /* this is ins */
     {
         IR2_OPND tmp_opnd1 = ir2_opnd_new(IR2_OPND_GPR, 11);
-#ifdef CONFIG_LATX_DECODE_DEBUG
-        if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
-            li_d(tmp_opnd1, (ADDR)pir1->info->x86.opcode);
-        } else
-#endif
-        {
-            li_d(tmp_opnd1, (ADDR)((INSTRUX *)(pir1->info))->OpCodeBytes);
-        }
+        li_d(tmp_opnd1, (ADDR)((INSTRUX *)(pir1->info))->OpCodeBytes);
         la_st_d(tmp_opnd1, sp_ir2_opnd,
                             TRACE_REG_STACK_OFFSET + i * 8);
        i += 1;
@@ -307,25 +257,11 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     IR2_OPND a2_opnd = ir2_opnd_new(IR2_OPND_GPR, la_a2);
     IR2_OPND a3_opnd = ir2_opnd_new(IR2_OPND_GPR, la_a3);
     la_andi(a0_opnd, a0_opnd, 0);
-#ifdef CONFIG_LATX_DECODE_DEBUG
-    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
-        la_ori(a0_opnd, a0_opnd, pir1->info->size);
-    } else
-#endif
-    {
-        la_ori(a0_opnd, a0_opnd, ((INSTRUX *)(pir1->info))->Length);
-    }
+    la_ori(a0_opnd, a0_opnd, ((INSTRUX *)(pir1->info))->Length);
     la_andi(a1_opnd, a1_opnd, 0);
     la_or(a1_opnd, a1_opnd, sp_ir2_opnd);
     la_andi(a2_opnd, a2_opnd, 0);
-#ifdef CONFIG_LATX_DECODE_DEBUG
-    if(pir1->decode_engine == OPT_DECODE_BY_CAPSTONE) {
-        li_d(a2_opnd, (ADDR)pir1->info->address);
-    } else 
-#endif
-    {
-        li_d(a2_opnd, (ADDR)pir1->address);
-    }
+    li_d(a2_opnd, (ADDR)pir1->address);
     li_d(a3_opnd, (ADDR)mem_access_count);
 
     tr_gen_call_to_helper(helper_method, LOAD_HELPER_TRACE_SESSION_BEGIN);
@@ -357,8 +293,9 @@ static void gen_trace_helper(ADDR helper_method, IR1_INST *pir1)
     }
 #endif
 }
-
+#ifndef CONFIG_LATX_DECODE_DEBUG
 void gen_ins_context_in_helper(IR1_INST *pir1)
 {
     gen_trace_helper((ADDR)trace_session_begin, pir1);
 }
+#endif

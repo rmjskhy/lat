@@ -30,7 +30,7 @@ bool translate_psllw_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -83,7 +83,7 @@ bool translate_pslld_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -138,7 +138,7 @@ bool translate_psllq_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -190,7 +190,7 @@ bool translate_psrlw_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -243,7 +243,7 @@ bool translate_psrld_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -297,7 +297,7 @@ bool translate_psrlq_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -354,7 +354,7 @@ bool translate_psraw_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(
@@ -411,7 +411,7 @@ bool translate_psrad_bd(IR1_INST *pir1)
         }
     } else { //mmx
         /* transfer to mmx mode */
-        transfer_to_mmx_mode();
+        transfer_to_mmx_mode_bd();
 
         if (ir1_opnd_is_imm_bd(ir1_get_opnd_bd(pir1, 0) + 1)) {
             IR2_OPND dest = load_freg_from_ir1_1_bd(

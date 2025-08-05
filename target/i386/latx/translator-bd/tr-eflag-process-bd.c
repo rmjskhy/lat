@@ -4,7 +4,8 @@
 #include "latx-options.h"
 #include "flag-lbt-bd.h"
 #include "translate-bd.h"
-/*char pf_table[256] = {
+#ifndef CONFIG_LATX_DECODE_DEBUG
+char pf_table[256] = {
     4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0,
     0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4,
     0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4,
@@ -20,7 +21,8 @@
     4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0,
     0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4,
     0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4,
-};*/
+};
+#endif
 
 static void generate_cf(IR2_OPND dest, IR2_OPND src0,
                         IR2_OPND src1, IR1_INST *pir1)

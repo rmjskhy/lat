@@ -7,11 +7,11 @@
 bool translate_cvtdq2pd_bd(IR1_INST *pir1)
 {
     lsassert(ir1_opnd_is_xmm_bd(ir1_get_opnd_bd(pir1, 0)));
-    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86();
+    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86_bd();
     IR2_OPND dest = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 0));
     IR2_OPND src = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 1));
     la_vffintl_d_w(dest, src);
-    set_fpu_rounding_mode(fcsr_opnd);
+    set_fpu_rounding_mode_bd(fcsr_opnd);
     return true;
 }
 
@@ -539,7 +539,7 @@ bool translate_cvtpi2ps_bd(IR1_INST *pir1)
 {
     lsassert(ir1_opnd_is_xmm_bd(ir1_get_opnd_bd(pir1, 0)));
     tr_x87_to_mmx();
-    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86();
+    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86_bd();
     IR2_OPND dest = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 0));
     IR2_OPND src =
         load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 1), false, IS_INTEGER);
@@ -548,7 +548,7 @@ bool translate_cvtpi2ps_bd(IR1_INST *pir1)
     la_vreplve_d(temp, src, zero_ir2_opnd);
     la_vffint_s_w(temp, temp);
     la_vextrins_d(dest, temp, VEXTRINS_IMM_4_0(0, 0));
-    set_fpu_rounding_mode(fcsr_opnd);
+    set_fpu_rounding_mode_bd(fcsr_opnd);
     return true;
 }
 
@@ -556,7 +556,7 @@ bool translate_cvtpi2pd_bd(IR1_INST *pir1)
 {
     lsassert(ir1_opnd_is_xmm_bd(ir1_get_opnd_bd(pir1, 0)));
     tr_x87_to_mmx();
-    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86();
+    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86_bd();
     IR2_OPND dest = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 0));
     IR2_OPND src =
         load_freg_from_ir1_1_bd(ir1_get_opnd_bd(pir1, 1), false, IS_INTEGER);
@@ -573,7 +573,7 @@ bool translate_cvtpi2pd_bd(IR1_INST *pir1)
         la_vextrins_d(dest, temp, 1 << 4);
         la_vextrins_d(dest, temp0, 0);
     }
-    set_fpu_rounding_mode(fcsr_opnd);
+    set_fpu_rounding_mode_bd(fcsr_opnd);
     return true;
 }
 
@@ -767,7 +767,7 @@ bool translate_cvttps2pi_bd(IR1_INST *pir1)
 bool translate_cvtsd2ss_bd(IR1_INST *pir1)
 {
     lsassert(ir1_opnd_is_xmm_bd(ir1_get_opnd_bd(pir1, 0)));
-    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86();
+    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86_bd();
     IR2_OPND dest = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 0));
     IR2_OPND src = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 1));
     IR2_OPND temp = ra_alloc_ftemp();
@@ -777,7 +777,7 @@ bool translate_cvtsd2ss_bd(IR1_INST *pir1)
     } else {
         la_vextrins_w(dest, temp, 0);
     }
-    set_fpu_rounding_mode(fcsr_opnd);
+    set_fpu_rounding_mode_bd(fcsr_opnd);
     return true;
 }
 
@@ -817,7 +817,7 @@ bool translate_cvtsi2ss_bd(IR1_INST *pir1)
     IR1_OPND_BD *opnd1 = ir1_get_opnd_bd(pir1, 0);
     IR1_OPND_BD *opnd2 = ir1_get_opnd_bd(pir1, 1);
     lsassert(ir1_opnd_is_xmm_bd(opnd1));
-    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86();
+    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86_bd();
     IR2_OPND dest = load_freg128_from_ir1_bd(opnd1);
     IR2_OPND src = load_ireg_from_ir1_bd(opnd2, UNKNOWN_EXTENSION, false);
     IR2_OPND temp_src = ra_alloc_ftemp();
@@ -828,7 +828,7 @@ bool translate_cvtsi2ss_bd(IR1_INST *pir1)
         la_ffint_s_w(temp_src, temp_src);
     }
     la_vextrins_w(dest, temp_src, VEXTRINS_IMM_4_0(0, 0));
-    set_fpu_rounding_mode(fcsr_opnd);
+    set_fpu_rounding_mode_bd(fcsr_opnd);
     return true;
 }
 
@@ -886,7 +886,7 @@ bool translate_cvtps2pd_bd(IR1_INST *pir1)
  */
 bool translate_cvtsx2si_bd(IR1_INST *pir1)
 {
-    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86();
+    IR2_OPND fcsr_opnd = set_fpu_fcsr_rounding_field_by_x86_bd();
     IR2_OPND src_lo = load_freg128_from_ir1_bd(ir1_get_opnd_bd(pir1, 1));
     IR2_OPND temp1 = ra_alloc_itemp();
     int opnd0_size = ir1_opnd_size_bd(ir1_get_opnd_bd(pir1, 0));
@@ -920,7 +920,7 @@ bool translate_cvtsx2si_bd(IR1_INST *pir1)
     la_masknez(fcsr, temp1, fcsr);
     la_or(temp1, overflow, fcsr);
 
-    set_fpu_rounding_mode(fcsr_opnd);
+    set_fpu_rounding_mode_bd(fcsr_opnd);
     store_ireg_to_ir1_bd(temp1, ir1_get_opnd_bd(pir1, 0), false);
 
     ra_free_temp(temp1);

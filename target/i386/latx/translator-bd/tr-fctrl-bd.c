@@ -677,6 +677,10 @@ void tr_fpu_store_tag_to_mem_bd(IR2_OPND mem_opnd, int mem_imm)
 #ifndef TARGET_X86_64
     /*in 32 situation, mem_opnd must to clear hight 32bit*/
     la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+    }
 #endif
     la_st_h(temp_2, mem_opnd, mem_imm);
 
@@ -804,7 +808,7 @@ bool translate_fldenv_bd(IR1_INST *pir1)
 
     /* load FPU tag word from memory to env*/
     la_ld_h(value, mem_opnd, 8);
-    tr_fpu_load_tag_to_env(value);
+    tr_fpu_load_tag_to_env_bd(value);
     /* dispose tag word */
     ra_free_temp(value);
     return true;
@@ -843,7 +847,7 @@ bool translate_fnstenv_bd(IR1_INST *pir1)
     la_st_w(value, mem_opnd, 4);
 
     /* store FPU tag word to memory */
-    tr_fpu_store_tag_to_mem(mem_opnd, 8);
+    tr_fpu_store_tag_to_mem_bd(mem_opnd, 8);
 
     la_st_w(temp, mem_opnd, 24);
 

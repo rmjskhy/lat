@@ -12,6 +12,8 @@
 
 #include "aot.h"
 
+//#define LATX_DEBUG_SOFTFPU
+
 #define TRANS_FUNC_BD(name) glue(glue(translate_, name), _bd)
 #define TRANS_FUNC_DEF_BD(name) \
 bool TRANS_FUNC_BD(name)(IR1_INST * pir1)
@@ -45,81 +47,23 @@ bool translate_##function##_wrap_bd(IR1_INST *pir1)    \
     return translate_##function##_bd(pir1);              \
 }
 
-void gen_softfpu_helper_prologue_bd(IR1_INST *pir1);
-void gen_softfpu_helper_epilogue_bd(IR1_INST *pir1);
-
-void update_fcsr_rm_bd(IR2_OPND control_word, IR2_OPND fcsr);
-bool ir1_need_reserve_h128_bd(IR1_INST *ir1);
-#ifdef CONFIG_LATX_AOT
-/* TODO */
-void load_ireg_from_host_addr_bd(IR2_OPND opnd2, uint64 value);
-void load_ireg_from_guest_addr_bd(IR2_OPND opnd2, uint64 value);
+#ifdef CONFIG_LATX_IMM_REG
+void save_imm_cache(void);
+void restore_imm_cache(void);
+#else
+#define save_imm_cache()
+#define restore_imm_cache()
 #endif
 
-IR2_OPND convert_mem_to_itemp_bd(IR1_OPND_BD *opnd0);
-IR2_OPND tr_lat_spin_lock_bd(IR2_OPND mem_addr, int imm);
-IR2_OPND convert_gpr_opnd_bd(IR1_OPND_BD *opnd1, EXTENSION_MODE em);
-void tr_generate_exit_stub_tb_bd(IR1_INST *branch, int succ_id, void *func, IR1_INST *stub);
-void tr_generate_exit_tb_bd(IR1_INST *branch, int succ_id);
-void set_high128_xreg_to_zero_bd(IR2_OPND opnd2);
-IR2_OPND load_freg256_from_ir1_bd(IR1_OPND_BD * opnd1);
-void load_freg256_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD * opnd1);
-void store_freg256_to_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD * opnd1);
-void clear_h32_bd(IR2_OPND *opnd);
-IR2_OPND load_freg128_from_ir1_bd(IR1_OPND_BD *opnd1);
-void store_freg128_to_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1);
-void load_freg128_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1);
-void set_fpu_rounding_mode_bd(IR2_OPND rm);
-IR2_OPND set_fpu_fcsr_rounding_field_by_x86_bd(void);
-void store_freg_to_ir1_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1, bool is_xmm_hi,
-                       bool is_convert);
-void store_64_bit_freg_to_ir1_80_bit_mem_bd(IR2_OPND opnd2,
-        IR2_OPND mem_opnd, int mem_imm);
-void store_singles_to_ir2_pack_bd(IR2_OPND single0, IR2_OPND single1,
-                               IR2_OPND pack);
-void load_singles_from_ir1_pack_bd(IR2_OPND single0, IR2_OPND single1,
-                                IR1_OPND_BD *opnd1, bool is_xmm_hi);
-void load_freg_from_ir1_2_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1, uint32_t options);
-IR2_OPND load_freg_from_ir1_1_bd(IR1_OPND_BD *opnd1, bool is_xmm_hi, uint32_t options);
-void transfer_to_fpu_mode_bd(void);
-void transfer_to_mmx_mode_bd(void);
-void load_64_bit_freg_from_ir1_80_bit_mem_bd(IR2_OPND opnd2,
-                                                 IR2_OPND mem_opnd, int mem_imm);
-void store_ireg_to_ir2_mem_bd(IR2_OPND value_opnd, IR2_OPND mem_opnd,
-                                  int mem_imm, int mem_size, bool is_xmm_hi);
-void store_ireg_to_ir1_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1, bool is_xmm_hi);
-void store_ireg_to_ir1_seg_bd(IR2_OPND seg_value_opnd, IR1_OPND_BD *opnd1);
-void load_ireg_from_cf_opnd_bd(IR2_OPND *opnd2);
-void load_ireg_from_ir1_2_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1, EXTENSION_MODE em,
-                          bool is_xmm_hi);
-IR2_OPND load_ireg_from_ir1_bd(IR1_OPND_BD *opnd1, EXTENSION_MODE em, bool is_xmm_hi);
-IR2_OPND load_ireg_from_ir2_mem_bd(IR2_OPND mem_opnd, int mem_imm, int mem_size,
-                                   EXTENSION_MODE em, bool is_xmm_hi);
-IR2_OPND mem_imm_add_disp_bd(IR2_OPND mem_op, int *old_imm, int disp);
-IR2_OPND convert_mem_bd(IR1_OPND_BD *opnd1, int *host_off);
-IR2_OPND convert_mem_no_offset_bd(IR1_OPND_BD *opnd1);
-void convert_mem_to_specific_gpr_bd(IR1_OPND_BD *opnd, IR2_OPND dest, int dest_size);
-void load_ireg_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1,
-                                   EXTENSION_MODE em, bool is_xmm_hi);
-bool si12_overflow_bd(long si12);
-int have_scq_bd(void);
-void generate_eflag_calculation_bd(IR2_OPND, IR2_OPND, IR2_OPND, IR1_INST *, bool);
-void tr_fpu_store_tag_to_mem_bd(IR2_OPND mem_opnd, int mem_imm);
-void tr_fpu_load_tag_to_env_bd(IR2_OPND fpu_tag);
-void update_sw_by_fcsr_bd(IR2_OPND sw_opnd);
-void update_fcsr_by_cw_bd(IR2_OPND cw);
-void update_fcsr_by_sw_bd(IR2_OPND sw);
-void helper_raise_syscall_bd(void);
-void helper_raise_int_bd(void);
-void restore_h128_of_ymm_bd(IR1_INST *ir1, IR2_OPND temp);
-IR2_OPND save_h128_of_ymm_bd(IR1_INST *ir1);
-#if defined(CONFIG_LATX_FLAG_REDUCTION) && \
-    defined(CONFIG_LATX_FLAG_REDUCTION_EXTEND)
-int8 get_etb_type_bd(IR1_INST *pir1);
-#endif
-
-#ifdef CONFIG_LATX_XCOMISX_OPT
-void generate_xcomisx_bd(IR2_OPND, IR2_OPND, bool, bool, uint8_t);
+#ifdef LATX_DEBUG_SOFTFPU
+#define TRANS_FPU_WRAP_GEN_DEBUG(function)          \
+bool translate_##function##_wrap_bd(IR1_INST *pir1)    \
+{                                                   \
+    if (0) {                                        \
+        return translate_##function##_softfpu_bd(pir1);\
+    }                                               \
+    return translate_##function_bd(pir1);              \
+}
 #endif
 
 #include "insts-pattern.h"
@@ -197,7 +141,7 @@ TRANS_FUNC_DEF_BD(in);
 TRANS_FUNC_DEF_BD(out);
 TRANS_FUNC_DEF_BD(call);
 TRANS_FUNC_DEF_BD(jmp);
-// TRANS_FUNC_DEF_BD(jmp_far);
+TRANS_FUNC_DEF_BD(ljmp);
 TRANS_FUNC_DEF_BD(hlt);
 TRANS_FUNC_DEF_BD(cmc);
 TRANS_FUNC_DEF_BD(clc);
@@ -554,8 +498,9 @@ TRANS_FUNC_DEF_BD(callnext);
 TRANS_FUNC_DEF_BD(callthunk);
 TRANS_FUNC_DEF_BD(callin);
 TRANS_FUNC_DEF_BD(jmpin);
-// TRANS_FUNC_DEF_BD(libfunc);
-
+#ifndef CONFIG_LATX_DECODE_DEBUG
+bool translate_libfunc(IR1_INST *pir1);
+#endif
 // /* byhand functions */
 // TRANS_FUNC_DEF_BD(add_byhand);
 // TRANS_FUNC_DEF_BD(or_byhand);
@@ -806,6 +751,216 @@ TRANS_FUNC_DEF_BD(crc32);
 TRANS_FUNC_DEF_BD(salc);
 TRANS_FUNC_DEF_BD(pclmulqdq);
 
+void tr_init(void *tb);
+void tr_fini(bool check_the_extension); /* default TRUE */
 
+void tr_disasm(struct TranslationBlock *tb, int max_insns);
+void etb_add_succ(void* etb,int depth);
+int tr_translate_tb(struct TranslationBlock *tb);
+int tr_ir2_generate(struct TranslationBlock *tb);
+int label_dispose(TranslationBlock *tb, TRANSLATION_DATA *lat_ctx);
+int tr_ir2_assemble(const void *code_start_addr, const IR2_INST *pir2);
+#if defined(CONFIG_LATX_FLAG_REDUCTION) && \
+    defined(CONFIG_LATX_FLAG_REDUCTION_EXTEND)
+int8 get_etb_type_bd(IR1_INST *pir1);
+#endif
+
+IR1_INST *get_ir1_list(struct TranslationBlock *tb, ADDRX pc, int max_insns);
+
+extern ADDR context_switch_native_to_bt_ret_0;
+extern ADDR context_switch_native_to_bt;
+extern ADDR ss_match_fail_native;
+
+/* target_latx_host()
+ * ---------------------------------------
+ * |  tr_disasm()
+ * |  -----------------------------------
+ * |  |  ir1_disasm()
+ * |  -----------------------------------
+ * |  tr_translate_tb()
+ * |  -----------------------------------
+ * |  |  tr_init()
+ * |  |  tr_ir2_generate()
+ * |  |  --------------------------------
+ * |  |  |  tr_init_for_each_ir1_in_tb()
+ * |  |  |  ir1_translate(pir1)
+ * |  |  --------------------------------
+ * |  |  tr_ir2_optimize()
+ * |  |  tr_ir2_assemble()
+ * |  |  tr_fini()
+ * |  -----------------------------------
+ * --------------------------------------- */
+
+void tr_skip_eflag_calculation(int usedef_bits);
+void tr_fpu_push(void);
+void tr_fpu_pop(void);
+void tr_fpu_inc(void);
+void tr_fpu_dec(void);
+void tr_fpu_enable_top_mode(void);
+void tr_fpu_disable_top_mode(void);
+
+void tr_fpu_load_tag_to_env_bd(IR2_OPND fpu_tag);
+void tr_fpu_store_tag_to_mem_bd(IR2_OPND mem_opnd, int mem_imm);
+
+extern int GPR_USEDEF_TO_SAVE;
+extern int FPR_USEDEF_TO_SAVE;
+extern int XMM_USEDEF_TO_SAVE;
+
+struct lat_lock{
+	int lock;
+} __attribute__ ((aligned (64)));;
+extern struct lat_lock lat_lock[16];
+
+void tr_set_running_of_cs(bool value);
+void tr_save_gpr_to_env(uint8 gpr_to_save);
+void tr_load_gpr_from_env(uint8 gpr_to_load);
+void tr_save_xmm_to_env(uint8 xmm_to_save);
+void tr_load_xmm_from_env(uint8 xmm_to_load);
+void tr_save_registers_to_env(uint8 gpr_to_save, uint8 fpr_to_save,
+                              uint8 xmm_to_save, uint8 vreg_to_save);
+void tr_load_registers_from_env(uint8 gpr_to_load, uint8 fpr_to_load,
+                                uint8 xmm_to_load, uint8 vreg_to_load);
+#ifdef TARGET_X86_64
+void tr_save_xmm64_to_env(uint8 xmm_to_save);
+void tr_load_xmm64_from_env(uint8 xmm_to_load);
+void tr_save_x64_8_registers_to_env(uint8 gpr_to_save, uint8 xmm_to_save);
+void tr_load_x64_8_registers_from_env(uint8 gpr_to_load, uint8 xmm_to_load);
+#endif
+void tr_save_fcsr_to_env(void);
+void tr_load_fcsr_from_env(void);
+void update_fcsr_by_sw_bd(IR2_OPND sw);
+
+void tr_gen_call_to_helper(ADDR, enum aot_rel_kind);
+void convert_fpregs_64_to_x80(void);
+void convert_fpregs_x80_to_64(void);
+void helper_raise_int_bd(void);
+void helper_raise_syscall_bd(void);
+
+bool si12_overflow(long si12);
+
+/* Loongarch V1.1 */
+int have_scq_bd(void);
+
+/* operand conversion */
+IR2_OPND convert_mem_bd(IR1_OPND_BD *opnd1, int *host_off);
+IR2_OPND mem_imm_add_disp_bd(IR2_OPND, int *, int);
+IR2_OPND convert_mem_no_offset_bd(IR1_OPND_BD *);
+void convert_mem_to_specific_gpr_bd(IR1_OPND_BD *, IR2_OPND, int);
+IR2_OPND convert_mem_to_itemp_bd(IR1_OPND_BD *opnd0);
+IR2_OPND convert_gpr_opnd_bd(IR1_OPND_BD *opnd1, EXTENSION_MODE em);
+IR2_OPND load_freg128_from_ir1_bd(IR1_OPND_BD *opnd1);
+IR2_OPND load_freg256_from_ir1_bd(IR1_OPND_BD * opnd1);
+void set_high128_xreg_to_zero_bd(IR2_OPND opnd2);
+void store_freg256_to_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD * opnd1);
+void load_freg256_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD * opnd1);
+
+#ifdef CONFIG_LATX_AOT
+/* TODO */
+void load_ireg_from_host_addr(IR2_OPND opnd2, uint64 value);
+void load_ireg_from_guest_addr(IR2_OPND opnd2, uint64 value);
+#endif
+
+void load_ireg_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1,
+                                   EXTENSION_MODE em, bool is_xmm_hi);
+IR2_OPND load_ireg_from_ir1_bd(IR1_OPND_BD *, EXTENSION_MODE, bool is_xmm_hi);
+void load_ireg_from_ir1_2_bd(IR2_OPND, IR1_OPND_BD *, EXTENSION_MODE, bool is_xmm_hi);
+void store_ireg_to_ir1_seg_bd(IR2_OPND seg_value_opnd, IR1_OPND_BD *opnd1);
+void store_ireg_to_ir1_bd(IR2_OPND, IR1_OPND_BD *, bool is_xmm_hi);
+
+IR2_OPND load_ireg_from_ir2_mem_bd(IR2_OPND mem_opnd, int mem_imm, int mem_size,
+                                   EXTENSION_MODE em, bool is_xmm_hi);
+void store_ireg_to_ir2_mem_bd(IR2_OPND value_opnd, IR2_OPND mem_opnd,
+                                  int mem_imm, int mem_size, bool is_xmm_hi);
+
+void load_ireg_from_cf_opnd_bd(IR2_OPND *opnd2);
+
+/* load to freg */
+IR2_OPND load_freg_from_ir1_1_bd(IR1_OPND_BD *opnd1, bool is_xmm_hi, uint32_t options);
+void load_freg_from_ir1_2_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1, uint32_t options);
+void store_freg_to_ir1_bd(IR2_OPND, IR1_OPND_BD *, bool is_xmm_hi, bool is_convert);
+void store_64_bit_freg_to_ir1_80_bit_mem_bd(IR2_OPND, IR2_OPND, int);
+void store_freg128_to_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1);
+void load_freg128_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1);
+void load_64_bit_freg_from_ir1_80_bit_mem_bd(IR2_OPND opnd2,
+                                                 IR2_OPND mem_opnd, int mem_imm);
+
+/* set/clear lsenv->mode_trans_mmx_fputo to transfer to MMX/FPU mode */
+void transfer_to_fpu_mode_bd(void);
+void transfer_to_mmx_mode_bd(void);
+
+/* load two singles from ir1 pack */
+void load_singles_from_ir1_pack_bd(IR2_OPND single0, IR2_OPND single1,
+                                IR1_OPND_BD *opnd1, bool is_xmm_hi);
+/* store two single into a pack */
+void store_singles_to_ir2_pack_bd(IR2_OPND single0, IR2_OPND single1,
+                               IR2_OPND pack);
+
+/* fcsr */
+void update_sw_by_fcsr_bd(IR2_OPND sw_opnd);
+void update_fcsr_by_cw_bd(IR2_OPND cw);
+IR2_OPND set_fpu_fcsr_rounding_field_by_x86_bd(void);
+void set_fpu_rounding_mode_bd(IR2_OPND rm);
+
+int generate_native_rotate_fpu_by(void *code_buf);
+void generate_context_switch_bt_to_native(void *code_buf);
+void generate_context_switch_native_to_bt(void);
+
+void generate_eflag_calculation_bd(IR2_OPND, IR2_OPND, IR2_OPND, IR1_INST *, bool);
+
+#ifdef CONFIG_LATX_XCOMISX_OPT
+void generate_xcomisx_bd(IR2_OPND, IR2_OPND, bool, bool, uint8_t);
+#endif
+
+/* extern ADDR tb_look_up_native; */
+void tr_generate_exit_tb_bd(IR1_INST *branch, int succ_id);
+#ifdef CONFIG_LATX_XCOMISX_OPT
+void tr_generate_exit_stub_tb_bd(IR1_INST *branch, int succ_id, void *func, IR1_INST *stub);
+#endif
+void tr_generate_goto_tb(void);                          /* TODO */
+
+/* rotate fpu */
+/* native_rotate_fpu_by(step, return_address) */
+extern ADDR native_rotate_fpu_by;
+extern ADDR indirect_jmp_glue;
+extern ADDR parallel_indirect_jmp_glue;
+void rotate_fpu_to_top(int top);
+void rotate_fpu_by(int step);
+void rotate_fpu_to_bias(int bias);
+
+void tr_gen_call_to_helper1(ADDR func, int use_fp, enum aot_rel_kind);
+void tr_gen_call_to_helper2(ADDR, IR2_OPND, int, enum aot_rel_kind);
+void tr_gen_call_to_helper_xgetbv(void);
+void tr_gen_call_to_helper_vfll(ADDR, IR2_OPND, IR2_OPND, int);
+void tr_gen_call_to_helper_pcmpxstrx(ADDR, int, int, int);
+void tr_gen_call_to_helper_cvttpd2pi(ADDR, int, int);
+void tr_gen_call_to_helper_pclmulqdq(ADDR, int, int, int, int ,int );
+void tr_gen_call_to_helper_aes(ADDR, int, int, int);
+void tr_load_top_from_env(void);
+void tr_gen_top_mode_init(void);
+
+IR2_OPND tr_lat_spin_lock(IR2_OPND mem_addr, int imm);
+void tr_lat_spin_unlock(IR2_OPND lat_lock_addr);
+
+void gen_softfpu_helper_prologue_bd(IR1_INST *pir1);
+void gen_softfpu_helper_epilogue_bd(IR1_INST *pir1);
+void update_fcsr_rm_bd(IR2_OPND control_word, IR2_OPND fcsr);
+
+bool ir1_need_reserve_h128_bd(IR1_INST *ir1);
+IR2_OPND save_h128_of_ymm_bd(IR1_INST *ir1);
+void restore_h128_of_ymm_bd(IR1_INST *ir1, IR2_OPND temp);
+void gen_test_page_flag(IR2_OPND mem_opnd, int mem_imm, uint32_t flag);
+
+void clear_h32_bd(IR2_OPND *opnd);
+
+#include "qemu-def.h"
+
+#define NONE            0
+#define IS_CONVERT      1
+#define IS_XMM_HI       (1 << 2)
+#define IS_INTEGER      (1 << 3)
+
+bool if_reduce_proepo(IR1_OPCODE_BD opcode);
+unsigned long tb_checksum(const uint8_t * start, size_t len);
+extern bool need_trace;
 
 #endif

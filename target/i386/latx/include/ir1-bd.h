@@ -7,6 +7,7 @@
 #include "reg-map.h"
 #include "latx-config.h"
 #include "ir1.h"
+#include "lsenv.h"
 
 typedef enum _ND_PREFIX {
     /* group 1 */
@@ -454,6 +455,13 @@ int ir1_get_opnd_size_bd(IR1_INST *inst)
             return 4 << 3;
         }
 #else
+        if (!CODEIS64) {
+            if (ir1_prefix_opnd_size_bd(inst) != 0) {
+                return 2 << 3;
+            } else {
+                return 4 << 3;
+            }
+        }
         return 8 << 3;
 #endif
         break;
@@ -503,7 +511,9 @@ int ir1_is_jump_bd(IR1_INST *ir1) {
     return (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPABS || 
         (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPE || 
         (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPNI ||
-        (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPNR;
+        (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPNR ||
+        (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPFI ||
+        (((INSTRUX *)(ir1->info))->Instruction) == ND_INS_JMPFD;
 }
 inline __attribute__ ((always_inline))
 int ir1_is_call_bd(IR1_INST *ir1)
@@ -573,7 +583,7 @@ void ir1_set_eflag_use_bd(IR1_INST *ir1, uint8_t use) { ir1->_eflag_use = use; }
 inline __attribute__ ((always_inline))
 void ir1_set_eflag_def_bd(IR1_INST *ir1, uint8_t def) { ir1->_eflag_def = def; }
 
-void ir1_make_ins_JMP_bd(IR1_INST *ir1, ADDRX addr, int32 off);
+void ir1_make_ins_JMP_bd(IR1_INST *ir1, ADDRX addr);
 int ir1_opnd_index_reg_num_bd(IR1_OPND_BD *opnd);
 int ir1_opnd_base_reg_num_bd(const IR1_OPND_BD *opnd);
 

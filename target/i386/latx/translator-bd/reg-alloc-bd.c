@@ -8,7 +8,7 @@
 #include "lsenv.h"
 #include <string.h>
 #include "latx-options.h"
-#include "translate.h"
+#include "translate-bd.h"
 #include "imm-cache.h"
 
 /*

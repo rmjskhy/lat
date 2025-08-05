@@ -1403,7 +1403,7 @@ int ir1_opnd_is_gpr_used(IR1_OPND *opnd, uint8_t gpr_index)
     } else if (ir1_opnd_is_mem(opnd)) {
         if (ir1_opnd_has_base(opnd)) {
 #ifdef TARGET_X86_64
-            if (!CODEIS64 && ir1_opnd_base_reg(opnd) == dt_X86_REG_RIP) {
+            if (CODEIS64 && ir1_opnd_base_reg(opnd) == dt_X86_REG_RIP) {
                 return 0;
             }
 #endif
@@ -1512,7 +1512,7 @@ int ir1_opnd_is_ymm(const IR1_OPND *opnd)
         return 0;
     }
     switch (opnd->reg) {
-    case dt_X86_REG_YMM0:
+    case dt_X86_REG_YMM0: 
     case dt_X86_REG_YMM1:
     case dt_X86_REG_YMM2:
     case dt_X86_REG_YMM3:
@@ -1791,7 +1791,8 @@ void ir1_set_eflag_use(IR1_INST *ir1, uint8_t use) { ir1->_eflag_use = use; }
 void ir1_set_eflag_def(IR1_INST *ir1, uint8_t def) { ir1->_eflag_def = def; }
 
 void ir1_make_ins_JMP(IR1_INST *ir1, ADDRX addr, int32 off)
-{ir1->decode_engine = OPT_DECODE_BY_CAPSTONE;
+{
+    ir1->decode_engine = OPT_DECODE_BY_CAPSTONE;
     struct la_dt_insn *info = ir1->info;
 
     info->bytes[0] = 0x69;

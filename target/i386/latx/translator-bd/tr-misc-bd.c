@@ -56,6 +56,10 @@ static void gen_set_next_tb_code(IR2_OPND *esp_ir2_opnd)
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(*esp_ir2_opnd, *esp_ir2_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(*esp_ir2_opnd, *esp_ir2_opnd, 31, 0);
+    }
 #endif
     la_load_addrx(nextip_ir2_opnd, *esp_ir2_opnd, 0);
 
@@ -125,8 +129,8 @@ static void kzt_helper_pFpL(ADDR func, IR2_OPND ptr, IR2_OPND L)
     la_st_d(a0_ir2_opnd, env_ir2_opnd, lsenv_offset_of_gpr(lsenv, R_EAX));
 }
 
-void kzt_native_to_wrapper_bd(void);
-void kzt_native_to_wrapper_bd(void)
+void kzt_native_to_wrapper(void);
+void kzt_native_to_wrapper(void)
 {
     tr_save_registers_to_env(0xff, 0xff, option_save_xmm, options_to_save());
     tr_save_x64_8_registers_to_env(0xff, option_save_xmm);
@@ -138,8 +142,8 @@ void kzt_native_to_wrapper_bd(void)
                           lsenv_offset_of_fcsr(lsenv));
 
 }
-void kzt_wrapper_to_native_bd(void);
-void kzt_wrapper_to_native_bd(void)
+void kzt_wrapper_to_native(void);
+void kzt_wrapper_to_native(void)
 {
     /* save dbt FCSR */
     IR2_OPND fcsr_value_opnd = ra_alloc_itemp();
@@ -167,9 +171,9 @@ static void do_translate_realloc_brick_tb(void)
     lsassert(realloc_pc);
     li_d(reserved_va_opnd, (ADDR)reserved_va);
     la_bltu(gpr_rdi_opnd, reserved_va_opnd, back_to_x86realloc_opnd);
-    kzt_native_to_wrapper_bd();
+    kzt_native_to_wrapper();
     kzt_helper_pFpL((ADDR)mmm_realloc, gpr_rdi_opnd, ra_alloc_gpr(esi_index));
-    kzt_wrapper_to_native_bd();
+    kzt_wrapper_to_native();
     gen_set_next_tb_code(&esp_ir2_opnd);
     tr_generate_exit_tb_for_bridge();
     la_label(back_to_x86realloc_opnd);
@@ -193,9 +197,9 @@ static void do_translate_free_brick_tb(void)
     lsassert(free_pc);
     li_d(reserved_va_opnd, (ADDR)reserved_va);
     la_bltu(gpr_rdi_opnd, reserved_va_opnd, back_to_x86free_opnd);
-    kzt_native_to_wrapper_bd();
+    kzt_native_to_wrapper();
     kzt_helper_ptr((ADDR)mmm_free, gpr_rdi_opnd);
-    kzt_wrapper_to_native_bd();
+    kzt_wrapper_to_native();
     gen_set_next_tb_code(&esp_ir2_opnd);
     tr_generate_exit_tb_for_bridge();
     la_label(back_to_x86free_opnd);
@@ -220,7 +224,7 @@ static void do_translate_brick_tb(onebridge_t *bridge, struct cpu_state_info *st
         do_translate_realloc_brick_tb();
         return;
     }
-    kzt_native_to_wrapper_bd();
+    kzt_native_to_wrapper();
     wrapper_gpr_trans((ADDR)bridge->f);
 
     tr_set_running_of_cs(false);
@@ -228,7 +232,7 @@ static void do_translate_brick_tb(onebridge_t *bridge, struct cpu_state_info *st
     la_jirl(ra_ir2_opnd, ra_ir2_opnd, 0);
     tr_set_running_of_cs(true);
 
-    kzt_wrapper_to_native_bd();
+    kzt_wrapper_to_native();
     gen_set_next_tb_code(&esp_ir2_opnd);
 
     tr_generate_exit_tb_for_bridge();
@@ -237,7 +241,7 @@ void do_translate_tbbridge_bd(ADDR func_pc, ADDR wrapper, TranslationBlock *tb);
 void do_translate_tbbridge_bd(ADDR func_pc, ADDR wrapper, TranslationBlock *tb)
 {
     IR2_OPND esp_ir2_opnd = ra_alloc_gpr(esp_index);
-    kzt_native_to_wrapper_bd();
+    kzt_native_to_wrapper();
     wrapper_gpr_trans((ADDR)func_pc);
 
     tr_set_running_of_cs(false);
@@ -245,7 +249,7 @@ void do_translate_tbbridge_bd(ADDR func_pc, ADDR wrapper, TranslationBlock *tb)
     la_jirl(ra_ir2_opnd, ra_ir2_opnd, 0);
     tr_set_running_of_cs(true);
 
-    kzt_wrapper_to_native_bd();
+    kzt_wrapper_to_native();
     gen_set_next_tb_code(&esp_ir2_opnd);
 
     tr_generate_exit_tb_for_bridge();
@@ -255,23 +259,29 @@ void do_translate_tbbridge_bd(ADDR func_pc, ADDR wrapper, TranslationBlock *tb)
 bool translate_int_3_bd(IR1_INST *pir1)
 {
 #if defined(CONFIG_LATX_KZT)
-    struct cpu_state_info state_info;
-    CPUState *cpu = env_cpu(lsenv->cpu_state);
-    /* fill in cpu_state_info */
-    state_info.cflags = cpu->tcg_cflags;
-    cpu_get_tb_cpu_state(cpu->env_ptr, &state_info.current_pc,
-                         &state_info.cs_base, &state_info.flags);
-    if(option_kzt && Peek8(state_info.current_pc + 1, 0) == 'S' && Peek8(state_info.current_pc + 1, 1) == 'C')
-    {
-        TranslationBlock *tb = NULL;
-        mmap_lock();
-        onebridge_t *bridge= (onebridge_t*)state_info.current_pc;
-        do_translate_brick_tb(bridge, &state_info, cpu, state_info.current_pc, tb);
-        mmap_unlock();
-    }
-    else
-#endif
+    if (CODEIS64) {
+        struct cpu_state_info state_info;
+        CPUState *cpu = env_cpu(lsenv->cpu_state);
+        /* fill in cpu_state_info */
+        state_info.cflags = cpu->tcg_cflags;
+        cpu_get_tb_cpu_state(cpu->env_ptr, &state_info.current_pc,
+                             &state_info.cs_base, &state_info.flags);
+        if(option_kzt && Peek8(state_info.current_pc + 1, 0) == 'S' && Peek8(state_info.current_pc + 1, 1) == 'C')
+        {
+            TranslationBlock *tb = NULL;
+            mmap_lock();
+            onebridge_t *bridge= (onebridge_t*)state_info.current_pc;
+            do_translate_brick_tb(bridge, &state_info, cpu, state_info.current_pc, tb);
+            mmap_unlock();
+        } else {
+            la_break(0x5);
+        }
+    } else {
         la_break(0x5);
+    }
+    return true;
+#endif
+    la_break(0x5);
     return true;
 }
 
@@ -408,7 +418,11 @@ bool translate_call_bd(IR1_INST *pir1)
 {
     /* call will not consider the address size override */
 #ifdef TARGET_X86_64
-    ((INSTRUX *)(pir1->info))->AddrMode = 2;
+    if (CODEIS64) {
+        ((INSTRUX *)(pir1->info))->AddrMode = 2;
+    } else {
+        ((INSTRUX *)(pir1->info))->AddrMode = 1;
+    }
 #else
     ((INSTRUX *)(pir1->info))->AddrMode = 1;
 #endif
@@ -425,6 +439,7 @@ bool translate_call_bd(IR1_INST *pir1)
     aot_load_guest_addr(x86_addr_opnd, ir1_addr_next_bd(pir1),
                         LOAD_CALL_TARGET, call_offset);
 
+#ifdef CONFIG_LATX_JRRA
     TranslationBlock *tb = lsenv->tr_data->curr_tb;
     if (option_jr_ra_stack) {
         la_code_align(2, 0x03400000);
@@ -477,9 +492,14 @@ bool translate_call_bd(IR1_INST *pir1)
         la_ori(zero_ir2_opnd, zero_ir2_opnd, 0);
         la_gr2scr(scr0_ir2_opnd, zero_ir2_opnd);
     }
+#endif
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+    }
 #endif
     /* if opnd_size = 2, use `ST_H` */
     if (opnd_size == 8) {
@@ -513,6 +533,10 @@ bool translate_callnext_bd(IR1_INST *pir1)
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+    }
 #endif
     /* if opnd_size = 16, use `ST_H` */
     if (opnd_size == 8) {
@@ -567,6 +591,7 @@ bool translate_callin_bd(IR1_INST *pir1)
     aot_load_guest_addr(return_addr_opnd, ir1_addr_next_bd(pir1),
                         LOAD_CALL_TARGET, call_offset);
 
+#ifdef CONFIG_LATX_JRRA
     TranslationBlock *tb = lsenv->tr_data->curr_tb;
     if (option_jr_ra_stack) {
         la_code_align(2, 0x03400000);
@@ -619,9 +644,14 @@ bool translate_callin_bd(IR1_INST *pir1)
         la_ori(zero_ir2_opnd, zero_ir2_opnd, 0);
         la_gr2scr(scr0_ir2_opnd, zero_ir2_opnd);
     }
+#endif
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+    }
 #endif
     /* if opnd_size = 16, use `ST_H` */
     if (opnd_size == 8) {
@@ -659,12 +689,22 @@ bool translate_retf_bd(IR1_INST *pir1)
     /* 2. adjust esp */
     la_addi_addrx(esp_opnd, esp_opnd, 8);
 #else
-    /* pop rip */
-    la_ld_d(return_addr_opnd, esp_opnd, 0);
-    /* pop cs */
-    la_ld_d(cs_opnd, esp_opnd, 4);
-    /* 2. adjust esp */
-    la_addi_addrx(esp_opnd, esp_opnd, 16);
+    if (CODEIS64) {
+        /* pop rip */
+        la_ld_wu(return_addr_opnd, esp_opnd, 0);
+        /* pop cs */
+        la_ld_w(cs_opnd, esp_opnd, 4);
+        /* 2. adjust esp */
+        la_addi_addrx(esp_opnd, esp_opnd, 8);
+    } else {
+        la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+        /* pop rip */
+        la_ld_wu(return_addr_opnd, esp_opnd, 0);
+        /* pop cs */
+        la_ld_w(cs_opnd, esp_opnd, 4);
+        /* 2. adjust esp */
+        la_addi_addrx(esp_opnd, esp_opnd, 8);
+    }
 #endif
 
     store_ireg_to_ir1_seg_bd(cs_opnd, &seg_opnd);
@@ -697,6 +737,10 @@ bool translate_iret_bd(IR1_INST *pir1)
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+    }
 #endif
 
     la_ld_wu(return_addr_opnd, esp_opnd, 0);
@@ -759,8 +803,14 @@ bool translate_ret_without_ss_opt_bd(IR1_INST *pir1)
                          UNKNOWN_EXTENSION, false);
     la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
 #else
-    load_ireg_from_ir1_2_bd(return_addr_opnd, &rsp_mem64_ir1_opnd_bd,
+    if (CODEIS64) {
+        load_ireg_from_ir1_2_bd(return_addr_opnd, &rsp_mem64_ir1_opnd_bd,
                          UNKNOWN_EXTENSION, false);
+    } else {
+        load_ireg_from_ir1_2_bd(return_addr_opnd, &esp_mem32_ir1_opnd_bd,
+                         UNKNOWN_EXTENSION, false);
+        la_bstrpick_d(esp_opnd, esp_opnd, 31, 0);
+    }
 #endif
     /* 2. adjust esp */
     int opnd_size = ir1_get_opnd_size_bd(pir1) >> 3;
@@ -808,6 +858,40 @@ bool translate_ret_without_ss_opt_bd(IR1_INST *pir1)
 bool translate_ret_bd(IR1_INST *pir1)
 {
     return translate_ret_without_ss_opt_bd(pir1);
+}
+
+bool translate_ljmp_bd(IR1_INST *pir1)
+{
+    ADDR local_fs_index;
+    IR1_OPND_BD* opnd0 = ir1_get_opnd_bd(pir1, 0);
+    IR2_OPND tmp_opnd = ra_alloc_itemp();
+    IR1_OPND_BD seg_opnd;
+    uint32_t old_size = 0;
+    #ifdef TARGET_X86_64
+    if (CODEIS64 == LATX_DT_X64 &&
+        (!(ir1_rex_bd(pir1) & 0x4))) {//rex.w be set.size is 64bit.
+        opnd0->Size = 6;
+    }
+    #endif
+    local_fs_index = ir1_opnd_size_bd(ir1_get_opnd_bd(pir1, 0)) - 16;
+    opnd0->Size -= 16>>3;
+    old_size = opnd0->Size;
+    /* 1. set successor x86 address */
+    IR2_OPND succ_x86_addr_opnd = ra_alloc_dbt_arg2();
+    load_ireg_from_ir1_2_bd(succ_x86_addr_opnd, ir1_get_opnd_bd(pir1, 0), ZERO_EXTENSION,
+                         false);
+    opnd0->Size = 16 >>3;
+    opnd0->Info.Memory.Disp += local_fs_index >> 3;
+    load_ireg_from_ir1_2_bd(tmp_opnd, ir1_get_opnd_bd(pir1, 0), ZERO_EXTENSION,
+                         false);
+    ir1_opnd_build_reg_bd(&seg_opnd, 16, NDR_CS, ND_REG_SEG);
+    store_ireg_to_ir1_seg_bd(tmp_opnd, &seg_opnd);
+    ra_free_temp(tmp_opnd);
+    /*recover opend0*/
+    opnd0->Size = old_size;
+    opnd0->Info.Memory.Disp -= local_fs_index >> 3;
+    tr_generate_exit_tb_bd(pir1, 1);
+    return true;
 }
 
 bool translate_jmp_bd(IR1_INST *pir1)
@@ -894,8 +978,13 @@ bool translate_enter_bd(IR1_INST *pir1)
     ir1_opnd_build_mem_bd(&mem_ir1_opnd, esp_decrement << 3,
         NDR_ESP, 32, -esp_decrement);
 #else
-    ir1_opnd_build_mem_bd(&mem_ir1_opnd, esp_decrement << 3,
-        NDR_RSP, 64, -esp_decrement);
+    if (CODEIS64) {
+        ir1_opnd_build_mem_bd(&mem_ir1_opnd, esp_decrement << 3,
+            NDR_RSP, 64, -esp_decrement);
+    } else {
+        ir1_opnd_build_mem_bd(&mem_ir1_opnd, esp_decrement << 3,
+            NDR_ESP, 32, -esp_decrement);
+    }
 #endif
     IR2_OPND rbp_opnd = ra_alloc_gpr(ebp_index);
     IR2_OPND frame_temp_opnd = ra_alloc_itemp();
@@ -972,7 +1061,11 @@ bool translate_leave_bd(IR1_INST *pir1)
 #ifndef TARGET_X86_64
     la_bstrpick_d(rsp_opnd, rbp_opnd, 31, 0);
 #else
-    la_or(rsp_opnd, rbp_opnd, zero_ir2_opnd);
+    if (CODEIS64) {
+        la_or(rsp_opnd, rbp_opnd, zero_ir2_opnd);
+    } else {
+        la_bstrpick_d(rsp_opnd, rbp_opnd, 31, 0);
+    }
 #endif
 
     /*
@@ -1103,6 +1196,15 @@ bool translate_int_syscall_bd(IR1_INST *pir1)
 
 bool translate_int_bd(IR1_INST *pir1)
 {
+#ifdef TARGET_X86_64
+    IR2_OPND codemode_value_opnd = ra_alloc_itemp();
+    IR2_OPND not_64 = ra_alloc_label();
+    la_ld_d(codemode_value_opnd, env_ir2_opnd, offsetof(CPUX86State, sys.codemode));
+    la_beq(codemode_value_opnd, zero_ir2_opnd, not_64);
+    ra_free_temp(codemode_value_opnd);
+    tr_save_x64_8_registers_to_env(0xff, option_save_xmm);
+    la_label(not_64);
+#endif
     tr_save_fcsr_to_env();
 #ifdef CONFIG_LATX_SYSCALL_TUNNEL
     if (ir1_get_opnd_bd(pir1, 0)->Info.Immediate.Imm == 0x80) {
@@ -1530,7 +1632,7 @@ bool translate_cwde_bd(IR1_INST *pir1)
     la_ext_w_h(eax_opnd, eax_opnd);
 #ifdef TARGET_X86_64
     /* x64 need clean the high 32 bits */
-    if (!GHBR_ON_BD(pir1)) {
+    if (!GHBR_ON_BD(pir1) && CODEIS64) {
         la_mov32_zx(eax_opnd, eax_opnd);
     }
 #endif
@@ -1582,13 +1684,13 @@ bool translate_fnsave_bd(IR1_INST *pir1)
     la_or(value, temp, value);
     la_st_w(value, mem_opnd, 0);
 
-    update_sw_by_fcsr(value);
+    update_sw_by_fcsr_bd(value);
     la_or(value, temp, value);
     la_st_w(value, mem_opnd, 4);
 
     if (option_fputag) {
         /* store FPU tag word from env to memory */
-        tr_fpu_store_tag_to_mem(mem_opnd, 8);
+        tr_fpu_store_tag_to_mem_bd(mem_opnd, 8);
     } else {
         la_ld_h(value, env_ir2_opnd,
                           lsenv_offset_of_tag_word(lsenv)); /* tag_word */
@@ -1614,7 +1716,7 @@ bool translate_fnsave_bd(IR1_INST *pir1)
     int i;
     for (i = 0; i <= 7; i++) {
         IR2_OPND st = ra_alloc_st(i);
-        store_64_bit_freg_to_ir1_80_bit_mem(st, mem_opnd, 28 + 10 * i);
+        store_64_bit_freg_to_ir1_80_bit_mem_bd(st, mem_opnd, 28 + 10 * i);
     }
     la_b(label_exit);
 
@@ -1688,7 +1790,7 @@ bool translate_frstor_bd(IR1_INST *pir1)
     if (option_fputag) {
         /* load FPU tag word from memory to env*/
         la_ld_h(value, mem_opnd, 8);
-        tr_fpu_load_tag_to_env(value);
+        tr_fpu_load_tag_to_env_bd(value);
 
     } else {
         la_ld_d(value, mem_opnd, 8);
@@ -1703,7 +1805,7 @@ bool translate_frstor_bd(IR1_INST *pir1)
     int i;
     for (i = 0; i <= 7; i++) {
         IR2_OPND st = ra_alloc_st(i);
-        load_64_bit_freg_from_ir1_80_bit_mem(
+        load_64_bit_freg_from_ir1_80_bit_mem_bd(
             st, mem_opnd, 28 + 10 * i);
     }
     la_b(label_exit);
@@ -1768,7 +1870,7 @@ bool translate_emms_bd(IR1_INST *pir1)
     la_st_d(temp, env_ir2_opnd, tag_offset);
 
     /* transfer to fpu mode */
-    transfer_to_fpu_mode();
+    transfer_to_fpu_mode_bd();
 
     ra_free_temp(temp);
     return true;
@@ -1782,22 +1884,26 @@ bool translate_xlat_bd(IR1_INST *pir1)
         load_ireg_from_ir1_bd(&al_ir1_opnd_bd, ZERO_EXTENSION, false);
     IR2_OPND ebx_opnd = ra_alloc_gpr(ir1_opnd_base_reg_num_bd(&ebx_ir1_opnd_bd));
 #ifndef TARGET_X86_64
-    clear_h32(&ebx_opnd);
+    clear_h32_bd(&ebx_opnd);
 #else
-    int addr_size = ir1_addr_size_bd(pir1);
-    IR2_OPND ebx_tmp = ra_alloc_itemp();
-    if (addr_size == 32) {
-        la_mov32_zx(ebx_tmp, ebx_opnd);
-        ebx_opnd = ebx_tmp;
-    } else if (addr_size == 16) {
-        la_bstrpick_d(ebx_tmp, ebx_opnd, 15, 0);
-        ebx_opnd = ebx_tmp;
+    if (CODEIS64) {
+        int addr_size = ir1_addr_size_bd(pir1);
+        IR2_OPND ebx_tmp = ra_alloc_itemp();
+        if (addr_size == 32) {
+            la_mov32_zx(ebx_tmp, ebx_opnd);
+            ebx_opnd = ebx_tmp;
+        } else if (addr_size == 16) {
+            la_bstrpick_d(ebx_tmp, ebx_opnd, 15, 0);
+            ebx_opnd = ebx_tmp;
+        }
+        /*
+        * attention!! This place free ebx_tmp is only safe when
+        * follow did not alloc itemp again.
+        */
+        ra_free_temp(ebx_tmp);
+    } else {
+        clear_h32_bd(&ebx_opnd);
     }
-    /*
-     * attention!! This place free ebx_tmp is only safe when
-     * follow did not alloc itemp again.
-     */
-    ra_free_temp(ebx_tmp);
 #endif
     la_ldx_b(value_opnd, ebx_opnd, al_opnd);
     store_ireg_to_ir1_bd(value_opnd, &al_ir1_opnd_bd, false);

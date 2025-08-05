@@ -327,7 +327,7 @@ bool translate_fnstsw_bd(IR1_INST *pir1)
     //     opnd0->size = (16 >> 3);
     //  }
 
-    update_sw_by_fcsr(sw_value);
+    update_sw_by_fcsr_bd(sw_value);
 
     /* 2. store the current value of status_word to dest_opnd */
     if (ir1_opnd_is_mem_bd(opnd0)) {

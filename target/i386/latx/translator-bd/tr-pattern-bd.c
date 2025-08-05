@@ -183,7 +183,7 @@ static inline void gen_sub_bd(IR2_OPND dest, IR2_OPND src_opnd_0, IR2_OPND src_o
 {
     la_sub_d(dest, src_opnd_0, src_opnd_1);
 #ifdef TARGET_X86_64
-    if (!GHBR_ON_BD(ir1) && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
+    if (!GHBR_ON_BD(ir1) && CODEIS64 && ir1_opnd_is_gpr_bd(opnd0) && opnd0_size == 32) {
         la_mov32_zx(dest, dest);
     }
 #endif

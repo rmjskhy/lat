@@ -44,6 +44,7 @@ uint8 flag_reduction_check(TranslationBlock *tb);
         uint8 _prex##_pending_use = __ALL_EFLAGS;
 #define CHK_FLAG_RDTN(_prex, _tb) \
         _prex##_pending_use = flag_reduction_check(_tb)
+#ifdef CONFIG_LATX_DECODE_DEBUG
 #define OPT_FLAG_RDTN(_prex, _inst) \
         do { \
             if (_inst->decode_engine == OPT_DECODE_BY_CAPSTONE) { \
@@ -60,7 +61,16 @@ uint8 flag_reduction_check(TranslationBlock *tb);
                 } \
             } \
         } while (0)
-
+#else
+#define OPT_FLAG_RDTN(_prex, _inst) \
+        do { \
+            if (option_flag_reduction) { \
+                flag_reduction_bd(_inst, &_prex##_pending_use); \
+            } else { \
+                flag_gen_bd(_inst); \
+            } \
+        } while (0)
+#endif
 #define SAVE_FLAG_TO_TB(_prex, _tb) \
         do { \
             _tb->eflag_use = (_prex##_pending_use); \

@@ -246,6 +246,8 @@ static int inst_pattern(TranslationBlock *tb,
         switch (ir1_opcode_bd(ir1)) {
         case WRAP(IDIV):
             opnd0 = ir1_get_opnd_bd(ir1, 0);
+            if (!ir1_opnd_is_gpr_bd(opnd0))
+                return 0;
             if (ir1_opnd_size_bd(opnd0) != 64)
                 return 0;
             if (is_contain_edx(opnd0))
@@ -295,6 +297,8 @@ static int inst_pattern(TranslationBlock *tb,
         switch (ir1_opcode_bd(ir1)) {
         case WRAP(IDIV):
             opnd0 = ir1_get_opnd_bd(ir1, 0);
+            if (!ir1_opnd_is_gpr_bd(opnd0))
+                return 0;
             if (ir1_opnd_size_bd(opnd0) != 32)
                 return 0;
             if (is_contain_edx(opnd0))
@@ -404,7 +408,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_CMP_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_CMP_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:
@@ -443,7 +447,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_TEST_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_TEST_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:
@@ -466,7 +470,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_BT_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_BT_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:
@@ -523,7 +527,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_COMISD_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_COMISD_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:
@@ -554,7 +558,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_COMISS_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_COMISS_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:
@@ -585,7 +589,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_UCOMISD_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_UCOMISD_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:
@@ -616,7 +620,7 @@ bool insts_pattern_scan_jcc_end_bd(TranslationBlock *tb, IR1_INST *pir1, int pir
                 pir1->instptn.opc  = INSTPTN_OPC_UCOMISS_XX_JCC;
                 pir1->instptn.next = ir1_jcc;
                 ir1_jcc->instptn.opc  = INSTPTN_OPC_UCOMISS_XX_JCC;
-                ir1_jcc->instptn.next = tb_ir1_inst(tb, pir1_index);
+                ir1_jcc->instptn.next = tb_ir1_inst_bd(tb, pir1_index);
             }
             return false;
         default:

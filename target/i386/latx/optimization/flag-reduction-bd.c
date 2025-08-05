@@ -317,10 +317,61 @@ static inline bool cmp_scas_need_zf_bd(IR1_INST *pir1)
             ir1_opcode_bd(pir1) == ND_INS_SCAS);
 }
 
+/**
+ * @brief Find if we have enough information by scan TB
+ *
+ * @param tb Current TB
+ * @return true We can find next TB to get more information
+ * if you want
+ * @return false We need not to scan next TB
+ */
+#ifndef CONFIG_LATX_DECODE_DEBUG
+static bool flag_reduction_pass1(void *tb)
+{
+#ifdef CONFIG_LATX_PROFILER
+    TCGProfile *prof = &tcg_ctx->prof;
+    qatomic_inc(&prof->flag_rdtn_times);
+    time_t ti = profile_getclock();
+#endif
+    TranslationBlock *ptb = (TranslationBlock *)tb;
+    IR1_INST *pir1 = NULL;
+
+    /* scanning if this insts will def ALL_EFLAGS */
+    for (int i = tb_ir1_num_bd(ptb) - 1; i >= 0; --i) {
+        pir1 = tb_ir1_inst_bd(ptb, i);
+        lsassert(pir1->decode_engine == OPT_DECODE_BY_BDDISASM);
+        const IR1_EFLAG_USEDEF *usedef = ir1_opcode_to_eflag_usedef_bd(pir1);
+        /*
+        * NOTE: if you find some insts will use ALL_EFLAGS
+        * you can add this case:
+        * if (usedef->use == __ALL_EFLAGS) return false;
+        */
+        if (usedef->use != __NONE) {
+            goto _false_path;
+        } else if (usedef->def == __NONE) {
+            /* curr_inst not def any flags */
+            continue;
+        } else {
+            break;
+        }
+    }
+#ifdef CONFIG_LATX_PROFILER
+    qatomic_add(&prof->flag_rdtn_pass1, profile_getclock() - ti);
+    qatomic_inc(&prof->flag_rdtn_stimes);
+#endif
+    return true;
+_false_path:
+#ifdef CONFIG_LATX_PROFILER
+    qatomic_add(&prof->flag_rdtn_pass1, profile_getclock() - ti);
+#endif
+    return false;
+}
+#endif
+
 uint8 pending_use_of_succ_bd(void *tb, int indirect_depth, int max_depth)
 {
     TranslationBlock *ptb = (TranslationBlock *)tb;
-    IR1_INST *pir1 = tb_ir1_inst_last(ptb);
+    IR1_INST *pir1 = tb_ir1_inst_last_bd(ptb);
     if (ir1_is_syscall_bd(pir1) ||
         (ir1_is_call_bd(pir1) && ir1_is_indirect_call_bd(pir1))) {
         return __NONE;
@@ -419,6 +470,36 @@ void flag_reduction_bd(IR1_INST *pir1, uint8 *pending_use)
 #endif
 }
 
+/**
+ * @brief do cross tb check and information
+ *
+ * @param tb current TB
+ * @return uint8 checked flag information
+ */
+#ifndef CONFIG_LATX_DECODE_DEBUG
+uint8 flag_reduction_check(TranslationBlock *tb)
+{
+    if (flag_reduction_pass1(tb)) {
+#ifdef CONFIG_LATX_PROFILER
+        TCGProfile *prof = &tcg_ctx->prof;
+        time_t ti = profile_getclock();
+#endif
+        uint8 pending_use = pending_use_of_succ_bd(tb, 1, MAX_DEPTH);
+#ifdef CONFIG_LATX_PROFILER
+        qatomic_add(&prof->flag_rdtn_search, profile_getclock() - ti);
+#endif
+        return pending_use;
+    }
+    return __ALL_EFLAGS;
+}
+#endif
+#endif /* CONFIG_LATX_FLAG_REDUCTION */
+
+/**
+ * @brief Inst flag generate
+ *
+ * @param pir1 Current inst
+ */
 void flag_gen_bd(IR1_INST *pir1)
 {
     const IR1_EFLAG_USEDEF curr_usedef = *ir1_opcode_to_eflag_usedef_bd(pir1);
@@ -426,5 +507,3 @@ void flag_gen_bd(IR1_INST *pir1)
     ir1_set_eflag_use_bd(pir1, curr_usedef.use);
     ir1_set_eflag_def_bd(pir1, curr_usedef.def & (~curr_usedef.undef));
 }
-
-#endif

@@ -205,7 +205,7 @@ static IR2_OPND convert_mem_helper(IR1_OPND_BD *opnd1, IR2_OPND *arg_dest_op,
     TranslationBlock *tb __attribute__((unused)) = lsenv->tr_data->curr_tb;
 
 #ifdef TARGET_X86_64
-    if (ir1_opnd_is_pc_relative_bd(opnd1)) {
+    if (CODEIS64 && ir1_opnd_is_pc_relative_bd(opnd1)) {
         /*
          * Intel SDM Volume 1 3.5.1
          *    In 64-bit mode, the RIP register becomes the instruction

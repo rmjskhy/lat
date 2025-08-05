@@ -12,7 +12,7 @@ int have_scq_bd(void)
     return (__cpucfg(0x2) & (1 << 30));
 }
 
-bool si12_overflow_bd(long si12)
+bool si12_overflow(long si12)
 {
     if (si12 >= -2048 && si12 <= 2047) {
         return false;
@@ -119,7 +119,7 @@ IR2_OPND convert_gpr_opnd_bd(IR1_OPND_BD *opnd1, EXTENSION_MODE em)
 }
 
 #ifdef CONFIG_LATX_AOT
-void load_ireg_from_host_addr_bd(IR2_OPND opnd2, uint64 value)
+void load_ireg_from_host_addr(IR2_OPND opnd2, uint64 value)
 {
     lsassert(ir2_opnd_is_ireg(&opnd2));
 
@@ -132,7 +132,7 @@ void load_ireg_from_host_addr_bd(IR2_OPND opnd2, uint64 value)
     return;
 }
 
-void load_ireg_from_guest_addr_bd(IR2_OPND opnd2, uint64 value)
+void load_ireg_from_guest_addr(IR2_OPND opnd2, uint64 value)
 {
     lsassert(ir2_opnd_is_ireg(&opnd2));
 
@@ -140,7 +140,7 @@ void load_ireg_from_guest_addr_bd(IR2_OPND opnd2, uint64 value)
     int32 lo32 = value & 0xffffffff;
     la_lu12i_w(opnd2, lo32 >> 12);
     la_ori(opnd2, opnd2, lo32 & 0xfff);
-    if (hi32) {
+    if (hi32 || (lo32 & 0x80000000)) {
         la_lu32i_d(opnd2, hi32 & 0xfffff);
     }
     return;
@@ -259,6 +259,10 @@ IR2_OPND load_ireg_from_ir2_mem_bd(IR2_OPND mem_opnd, int mem_imm, int mem_size,
     IR2_OPND opnd2 = ra_alloc_itemp_internal();
 #ifndef TARGET_X86_64
     la_mov32_zx(mem_opnd, mem_opnd);
+#else
+    if (!CODEIS64) {
+        la_mov32_zx(mem_opnd, mem_opnd);
+    }
 #endif
     if (mem_size == 32) {
         if (em == ZERO_EXTENSION) {
@@ -556,7 +560,7 @@ static void store_ireg_to_ir1_mem_bd(IR2_OPND value_opnd, IR1_OPND_BD *opnd1,
     int mem_imm;
     IR2_OPND mem_opnd = convert_mem_bd(opnd1, &mem_imm);
     if (is_xmm_hi) {
-        mem_opnd = mem_imm_add_disp(mem_opnd, &mem_imm, 8);
+        mem_opnd = mem_imm_add_disp_bd(mem_opnd, &mem_imm, 8);
     }
 
     gen_test_page_flag(mem_opnd, mem_imm, PAGE_WRITE | PAGE_WRITE_ORG);
@@ -611,6 +615,24 @@ void store_ireg_to_ir1_seg_bd(IR2_OPND seg_value_opnd, IR1_OPND_BD *opnd1)
     IR2_OPND label_base_end = ra_alloc_label();
     IR2_OPND is_ldt = ra_alloc_itemp_internal(); /* [51:48] [15: 0] limit */
     IR2_OPND dt_opnd = ra_alloc_itemp_internal();
+#ifdef TARGET_X86_64
+    if (seg_num == NDR_CS) {
+        IR2_OPND ir2_tmp = ra_alloc_itemp();
+        IR2_OPND label_x64 = ra_alloc_label();
+        IR2_OPND label_csend = ra_alloc_label();//if (cs == 0x23) isx86 ; else is x64;
+        li_d(ir2_tmp, 0x23);
+        la_bne(seg_value_opnd, ir2_tmp,label_x64);
+        la_st_w(zero_ir2_opnd, env_ir2_opnd,
+            offsetof(CPUX86State, sys.codemode));
+        la_b(label_csend);
+        la_label(label_x64);
+        li_d(ir2_tmp, 1);
+        la_st_w(ir2_tmp, env_ir2_opnd,
+            offsetof(CPUX86State, sys.codemode));
+        la_label(label_csend);
+        ra_free_temp(ir2_tmp);
+    }
+#endif
     la_andi(is_ldt, seg_value_opnd, 0x4);
     la_bne(is_ldt, zero_ir2_opnd, label_ldt);
     ra_free_temp(is_ldt);
@@ -738,6 +760,10 @@ void store_ireg_to_ir2_mem_bd(IR2_OPND value_opnd, IR2_OPND mem_opnd,
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+    }
 #endif
 
     if (mem_size == 32) {
@@ -768,6 +794,10 @@ void load_64_bit_freg_from_ir1_80_bit_mem_bd(IR2_OPND opnd2,
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+    }
 #endif
 
     la_fld_s(ir2_sign_exp, mem_opnd, mem_imm + 8);
@@ -830,7 +860,7 @@ static void load_freg_from_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1,
     int mem_imm;
     mem_opnd = convert_mem_bd(opnd1, &mem_imm);
     if (is_xmm_hi) {
-        mem_opnd = mem_imm_add_disp(mem_opnd, &mem_imm, 8);
+        mem_opnd = mem_imm_add_disp_bd(mem_opnd, &mem_imm, 8);
     }
 
     gen_test_page_flag(mem_opnd, mem_imm, PAGE_READ);
@@ -1034,6 +1064,10 @@ void store_64_bit_freg_to_ir1_80_bit_mem_bd(IR2_OPND opnd2,
 
 #ifndef TARGET_X86_64
     la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+#else
+    if (!CODEIS64) {
+        la_bstrpick_d(mem_opnd, mem_opnd, 31, 0);
+    }
 #endif
 
     /* Temporarily mask V to make the conversion don't trigger SIGFPE */
@@ -1078,7 +1112,7 @@ static void store_freg_to_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD *opnd1,
     int mem_imm;
     IR2_OPND mem_opnd = convert_mem_bd(opnd1, &mem_imm);
     if (is_xmm_hi) {
-        mem_opnd = mem_imm_add_disp(mem_opnd, &mem_imm, 8);
+        mem_opnd = mem_imm_add_disp_bd(mem_opnd, &mem_imm, 8);
     }
 
     gen_test_page_flag(mem_opnd, mem_imm, PAGE_WRITE | PAGE_WRITE_ORG);
@@ -1256,12 +1290,12 @@ IR2_OPND load_freg128_from_ir1_bd(IR1_OPND_BD *opnd1){
     g_assert_not_reached();
 }
 
-#ifndef TARGET_X86_64
 void clear_h32_bd(IR2_OPND *opnd)
 {
-     la_mov32_zx(*opnd, *opnd);
+     if (!CODEIS64) {
+         la_mov32_zx(*opnd, *opnd);
+     }
 }
-#endif
 
 /* load/store 256 bit mem or register */
 void store_freg256_to_ir1_mem_bd(IR2_OPND opnd2, IR1_OPND_BD * opnd1) {

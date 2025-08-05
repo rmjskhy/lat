@@ -136,7 +136,11 @@ void imm_cache_update_by_diff(IMM_CACHE *cache, int cache_id, long diff);
 int imm_cache_put(IMM_CACHE *cache, int base, int index, int scale,
                   int64 offset);
 
+#ifdef CONFIG_LATX_DECODE_DEBUG
 void imm_cache_update_ir1_usage(IMM_CACHE *cache, IR1_INST *pir1,
+                                int curr_ir1_index);
+#endif
+void imm_cache_update_ir1_usage_bd(IMM_CACHE *cache, IR1_INST *pir1,
                                 int curr_ir1_index);
 
 bool imm_cache_is_cached_at(IMM_CACHE *cache, int cache_index);
