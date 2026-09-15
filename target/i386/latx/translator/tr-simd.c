@@ -4120,7 +4120,7 @@ void load_aes_key_from_mem(IR2_OPND key, IR1_OPND *mem)
     assert(ir1_opnd_is_mem(mem));
     assert(ir1_opnd_size(mem) == 128);
     address = convert_mem(mem, &offset);
-    gen_test_page_flag(address, offset, PAGE_READ);
+    gen_test_page_flag(address, offset, PAGE_READ, 16);
     la_vld(key, address, offset);
     /* AES needs every x86-64 itemp; the emitted load no longer needs this. */
     ra_free_temp_auto(address);
