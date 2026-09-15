@@ -25,6 +25,7 @@ run_aot()
 {
     name=$1
     aot_home="$workdir/aot-$name"
+    marker="$aot_home/hot-aot-loaded"
     mkdir -p "$aot_home"
     HOME="$aot_home" LATX_AOT=1 "$emulator" "$workdir/$name"
 
@@ -39,7 +40,13 @@ run_aot()
         exit 1
     fi
 
-    HOME="$aot_home" LATX_AOT=1 "$emulator" "$workdir/$name"
+    HOME="$aot_home" LATX_AOT=1 \
+        LATX_TEST_AOT_LOAD_MARKER="$marker" \
+        "$emulator" "$workdir/$name"
+    if ! grep -Fx "$workdir/$name" "$marker" >/dev/null 2>&1; then
+        echo "FAIL: AOT cache was not loaded for $name" >&2
+        exit 1
+    fi
 }
 
 run_aot aes-rounds
