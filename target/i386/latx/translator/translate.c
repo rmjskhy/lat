@@ -1883,6 +1883,9 @@ static void reset_aes_table_cache_for_non_aes(IR1_INST *ir1)
 
 bool ir1_translate(IR1_INST *ir1)
 {
+    /* Pattern translators also overwrite the cached table's temporary GPR. */
+    reset_aes_table_cache_for_non_aes(ir1);
+
 #ifdef CONFIG_LATX_INSTS_PATTERN
     if (try_translate_instptn(ir1)) {
         ra_free_all();
@@ -1900,8 +1903,6 @@ bool ir1_translate(IR1_INST *ir1)
         lsenv->current_ir1 = ir1_addr(ir1);
     }
 #endif
-
-    reset_aes_table_cache_for_non_aes(ir1);
 
     if (ir1_opcode(ir1) == dt_X86_INS_CALL) {
         if (!ir1_is_indirect_call(ir1)) {

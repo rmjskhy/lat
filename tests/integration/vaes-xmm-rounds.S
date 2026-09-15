@@ -14,6 +14,23 @@
 .Lcheck_done\@:
 .endm
 
+.macro CHECK_PATTERN op, expected, carry
+	vmovdqu xmm0, XMMWORD PTR [rip + state0]
+	vmovdqu xmm1, XMMWORD PTR [rip + state0]
+	mov ebx, 1 - \carry
+	mov ecx, \carry
+	\op xmm0, xmm0, xmm2
+	cmp rbx, rcx
+	sbb eax, eax
+	\op xmm1, xmm1, xmm2
+	cmp eax, -\carry
+	je .Lpattern_ok\@
+	inc DWORD PTR [rip + fail_count]
+.Lpattern_ok\@:
+	CHECK_XMM xmm0, \expected
+	CHECK_XMM xmm1, \expected
+.endm
+
 .section .data
 fail_count: .long 0
 
@@ -106,6 +123,11 @@ _start:
     vaesenclast xmm1, xmm1, xmm2
     CHECK_XMM xmm0, last0
     CHECK_XMM xmm1, last1
+
+	CHECK_PATTERN vaesenc, enc0, 0
+	CHECK_PATTERN vaesenc, enc0, 1
+	CHECK_PATTERN vaesenclast, last0, 0
+	CHECK_PATTERN vaesenclast, last0, 1
 
     vmovdqu xmm0, XMMWORD PTR [rip + state0]
     mov ecx, 500000
