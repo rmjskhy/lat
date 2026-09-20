@@ -11,12 +11,18 @@ from pathlib import Path
 SOURCE_SUFFIXES = {".c", ".h", ".inc"}
 
 
-def source_files(root, directories):
+def source_files(root, directories, exclude_directories):
     paths = []
+    excluded = [(root / directory).resolve() for directory in exclude_directories]
     for directory in directories:
         base = (root / directory).resolve()
         for path in base.rglob("*"):
-            if path.is_file() and path.suffix in SOURCE_SUFFIXES:
+            if (
+                path.is_file()
+                and path.suffix in SOURCE_SUFFIXES
+                and not any(path == directory or directory in path.parents
+                            for directory in excluded)
+            ):
                 paths.append(path)
     return sorted(paths, key=lambda path: path.relative_to(root).as_posix())
 
@@ -53,13 +59,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--directory", action="append", default=[])
+    parser.add_argument("--exclude-directory", action="append", default=[])
     parser.add_argument("--config", action="append", default=[])
     parser.add_argument("--output", type=Path)
     parser.add_argument("--print-inputs", action="store_true")
     arguments = parser.parse_args()
 
     root = arguments.root.resolve()
-    paths = source_files(root, arguments.directory)
+    paths = source_files(root, arguments.directory, arguments.exclude_directory)
     if arguments.print_inputs:
         for path in paths:
             print(path.relative_to(root).as_posix())

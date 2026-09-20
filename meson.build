@@ -707,10 +707,10 @@ foreach target : target_dirs
         'target/i386/latx/sbt/aot_reader.c',
         'target/i386/latx/sbt/aot_lib.c',
         'target/i386/latx/sbt/file_ctx.c'
-      ) + genh + tcg_trace_genh + [syscall_nr_generated],
+      ) + genh + tcg_trace_genh + [syscall_nr_generated, latx_aot_build_id],
       c_args: smc_reload_test_c_args,
       dependencies: [glib],
-      include_directories: target_inc,
+      include_directories: target_inc + [include_directories('target/i386/latx')],
       link_args: smc_reload_test_link_args + [
         '-Wl,--wrap=fdopen',
         '-Wl,--wrap=fclose'
@@ -777,11 +777,11 @@ foreach target : target_dirs
         files(
           'target/i386/latx/sbt/tests/aot-merge-memory-test.c',
           'target/i386/latx/sbt/file_ctx.c'
-        ) + genh + tcg_trace_genh + [syscall_nr_generated],
+        ) + genh + tcg_trace_genh + [syscall_nr_generated, latx_aot_build_id],
         c_args: smc_reload_test_c_args +
                 (variant == '' ? [] : ['-DAOT_MERGE_TEST_NO_TU']),
         dependencies: [glib],
-        include_directories: target_inc,
+        include_directories: target_inc + [include_directories('target/i386/latx')],
         link_args: smc_reload_test_link_args + [
           '-Wl,--wrap=malloc', '-Wl,--wrap=free',
           '-Wl,--wrap=get_aot_path', '-Wl,--wrap=opendir'

@@ -76,7 +76,11 @@ latx_aot_directories = [
   'target/i386/latx/sbt',
   'target/i386/latx/include',
 ]
+latx_aot_exclude_directories = [
+  'target/i386/latx/sbt/tests',
+]
 latx_aot_generator = project_source_root / 'scripts/gen-aot-build-id.py'
+latx_aot_generator_file = files('../../../scripts/gen-aot-build-id.py')
 latx_aot_input_names = run_command(
   python, latx_aot_generator,
   '--root', project_source_root,
@@ -87,6 +91,7 @@ latx_aot_input_names = run_command(
   '--directory', latx_aot_directories[3],
   '--directory', latx_aot_directories[4],
   '--directory', latx_aot_directories[5],
+  '--exclude-directory', latx_aot_exclude_directories[0],
   check: true,
 ).stdout().strip().split('\n')
 latx_aot_inputs = []
@@ -163,7 +168,9 @@ latx_aot_build_id = custom_target(
     '--directory', latx_aot_directories[3],
     '--directory', latx_aot_directories[4],
     '--directory', latx_aot_directories[5],
+    '--exclude-directory', latx_aot_exclude_directories[0],
   ],
+  depend_files: latx_aot_generator_file,
 )
 i386_ss.add(when: 'CONFIG_LATX', if_true: latx_aot_build_id)
 
