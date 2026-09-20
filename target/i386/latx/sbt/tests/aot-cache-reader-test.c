@@ -3,7 +3,7 @@
 #include <fcntl.h>
 
 #include "aot.h"
-#include "latx-version.h"
+#include "aot-version.h"
 #include "aot_reader.h"
 #include "aot_lib.h"
 #include "file_ctx.h"
