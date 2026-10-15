@@ -142,6 +142,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
                   kzt_tbbridge_contains(tb->pc);
 #endif
 #if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64)
+    tb->bool_flags &= ~IS_QUICKTRANS_TB;
     if (quicktrans_enabled && !is_tbbridge) {
         int code_size = 0;
         int search_size = 0;
@@ -149,6 +150,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
         if (latx_fast_decode_translate_tb_primary_ex(
                 env, tb, max_insns, &code_size, &search_size,
                 &quicktrans_failure)) {
+            tb->bool_flags |= IS_QUICKTRANS_TB;
             return code_size + search_size;
         }
         quicktrans_fallback = true;
