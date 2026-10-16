@@ -8758,6 +8758,14 @@ void restore_state_to_opc(CPUX86State *env, TranslationBlock *tb,
 {
     int cc_op = data[1] & 0xffff;
     uint16_t ymmh_zero_pending = data[1] >> 16;
+#ifdef LATX_QUICKTRANS_RSP_SEARCH_ABI
+    if (tb->bool_flags & IS_QUICKTRANS_TB) {
+        /* QT used zero here before the RSP-search ABI. Keep its cc_op
+         * convention while interpreting the new signed stack correction. */
+        cc_op = 0;
+        ymmh_zero_pending = 0;
+    }
+#endif
 
     /* env->eip = data[0] - tb->cs_base; */
     env->eip = data[0];
@@ -8791,6 +8799,11 @@ void restore_state_to_opc(CPUX86State *env, TranslationBlock *tb,
     env->regs[R_ECX] = UC_GR(uc)[reg_gpr_map[ecx_index]];
     env->regs[R_EDX] = UC_GR(uc)[reg_gpr_map[edx_index]];
     env->regs[R_ESP] = UC_GR(uc)[reg_gpr_map[esp_index]];
+#ifdef LATX_QUICKTRANS_RSP_SEARCH_ABI
+    if (tb->bool_flags & IS_QUICKTRANS_TB) {
+        env->regs[R_ESP] += (target_long)data[1];
+    }
+#endif
     env->regs[R_EBP] = UC_GR(uc)[reg_gpr_map[ebp_index]];
     env->regs[R_ESI] = UC_GR(uc)[reg_gpr_map[esi_index]];
     env->regs[R_EDI] = UC_GR(uc)[reg_gpr_map[edi_index]];

@@ -1444,6 +1444,8 @@ typedef struct CPUX86State {
     !defined(CONFIG_SOFTMMU)
 #define LATX_QUICKTRANS_BCD_HARD64_ABI 1
 #define LATX_QUICKTRANS_X87_SIGNAL_ABI 1
+/* Quicktrans search data[1] is the deferred guest RSP correction. */
+#define LATX_QUICKTRANS_RSP_SEARCH_ABI 1
 #endif
 #endif
     /* standard registers */
