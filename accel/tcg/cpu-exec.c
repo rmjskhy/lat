@@ -355,6 +355,16 @@ latx_skip_lazypc_update:
     }
     *tb_exit = ret & TB_EXIT_MASK;
 
+#ifdef LATX_QUICKTRANS_X87_SIGNAL_ABI
+    if (last_tb && (last_tb->bool_flags & IS_QUICKTRANS_TB) &&
+        !option_softfpu) {
+        /* Normal exits saved all physical low64 slots in the shared glue. */
+        env->qt_hard_signal_protocol_enabled = true;
+        env->qt_x87_env_format = env->mode_fpu ? QT_X87_ENV_HARD64 :
+                                                          QT_X87_ENV_MMX64;
+    }
+#endif
+
     trace_exec_tb_exit(last_tb, *tb_exit);
     if (last_tb) {
         if (tb_is_unlink(last_tb, 0)) {

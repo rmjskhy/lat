@@ -25,6 +25,10 @@
 #include "tcg/tcg-op.h"
 #include "exec/cpu_ldst.h"
 #include "exec/translator.h"
+#if defined(CONFIG_LATX) && defined(CONFIG_LATX_FAST_TRANSLATOR) && \
+    defined(TARGET_X86_64) && !defined(CONFIG_SOFTMMU)
+#include "fpu/softfloat.h"
+#endif
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
@@ -8761,6 +8765,19 @@ void restore_state_to_opc(CPUX86State *env, TranslationBlock *tb,
         env->cc_op = cc_op;
     }
 
+#if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64) && \
+    !defined(CONFIG_SOFTMMU)
+    if ((tb->bool_flags & IS_QUICKTRANS_TB) &&
+        env->qt_helper_env_saved) {
+        /* The complete guest snapshot and FCSR were saved before calling C.
+         * Keep its explicit format; C ucontext registers are temporaries.
+         * cpu_loop_exit normalizes x80 before re-entering guest execution.
+         */
+        env->qt_bcd_helper_env_hard64 = false;
+        return;
+    }
+#endif
+
     ucontext_t *uc = env->puc;
     if (!uc)
         return;
@@ -8798,5 +8815,12 @@ void restore_state_to_opc(CPUX86State *env, TranslationBlock *tb,
             }
         }
     }
+#ifdef LATX_QUICKTRANS_X87_SIGNAL_ABI
+    if ((tb->bool_flags & IS_QUICKTRANS_TB) && !option_softfpu) {
+        env->qt_hard_signal_protocol_enabled = true;
+        env->qt_x87_env_format = env->mode_fpu ? QT_X87_ENV_HARD64 :
+                                                          QT_X87_ENV_MMX64;
+    }
+#endif
 }
 #endif

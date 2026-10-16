@@ -142,6 +142,26 @@ static void do_fstt(CPUX86State *env, floatx80 f, target_ulong ptr,
 
 /* x87 FPU helpers */
 
+#ifdef LATX_QUICKTRANS_X87_SIGNAL_ABI
+void latx_qt_x87_env_to_hard64(CPUX86State *env)
+{
+    if (!env->qt_hard_signal_protocol_enabled || option_softfpu ||
+        env->qt_x87_env_format != QT_X87_ENV_X80) {
+        return;
+    }
+    float_status status = env->fp_status;
+    for (int i = 0; i < 8; ++i) {
+        if (env->mode_fpu) {
+            env->fpregs[i].d.low = floatx80_to_float64(env->fpregs[i].d,
+                                                     &status);
+        }
+        env->fpregs[i].d.high = 0;
+    }
+    env->qt_x87_env_format = env->mode_fpu ? QT_X87_ENV_HARD64 :
+                                                      QT_X87_ENV_MMX64;
+}
+#endif
+
 static inline double floatx80_to_double(CPUX86State *env, floatx80 a)
 {
     union {
