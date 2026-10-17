@@ -512,8 +512,18 @@ static void xsave_sigcontext(CPUX86State *env,
         memcpy(saved_tags, env->fptags, sizeof(saved_tags));
         for (int i = 0; i < 8; ++i) {
             if (env->mode_fpu) {
-                env->fpregs[i].d = float64_to_floatx80(
-                    (float64)saved[i].d.low, &status);
+                uint64_t bits = saved[i].d.low;
+                if (saved_tags[i] &&
+                    (bits & 0x7ff0000000000000ULL) == 0x7ff0000000000000ULL &&
+                    (bits & 0x000fffffffffffffULL)) {
+                    /* Empty slots can retain MMX signalling-NaN bits after
+                     * EMMS. Keep their payload while forming an x80 image. */
+                    env->fpregs[i].d.high = (bits >> 48 & 0x8000) | 0x7fff;
+                    env->fpregs[i].d.low = 0x8000000000000000ULL | (bits << 11);
+                } else {
+                    env->fpregs[i].d = float64_to_floatx80(
+                        (float64)bits, &status);
+                }
             } else {
                 /* MMX aliases contain integer bits, never a double value. */
                 env->fpregs[i].d.high = 0xffff;

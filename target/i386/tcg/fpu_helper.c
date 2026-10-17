@@ -152,8 +152,18 @@ void latx_qt_x87_env_to_hard64(CPUX86State *env)
     float_status status = env->fp_status;
     for (int i = 0; i < 8; ++i) {
         if (env->mode_fpu) {
-            env->fpregs[i].d.low = floatx80_to_float64(env->fpregs[i].d,
-                                                     &status);
+            floatx80 value = env->fpregs[i].d;
+            if (env->fptags[i] && (value.high & 0x7fff) == 0x7fff &&
+                (value.low & 0x7ffffffffffff800ULL)) {
+                /* Invert the empty-slot NaN mapping used by signal frames,
+                 * without quieting an unused MMX signalling-NaN payload. */
+                env->fpregs[i].d.low =
+                    ((uint64_t)(value.high & 0x8000) << 48) |
+                    0x7ff0000000000000ULL |
+                    ((value.low >> 11) & 0x000fffffffffffffULL);
+            } else {
+                env->fpregs[i].d.low = floatx80_to_float64(value, &status);
+            }
         }
         env->fpregs[i].d.high = 0;
     }
