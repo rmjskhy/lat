@@ -209,6 +209,11 @@ if cs_latx_debug or cs_git
 endif
 
 if 'CONFIG_LATX_FAST_TRANSLATOR' in config_host
+  # Resolve host includes before entering a possibly symlinked Quicktrans tree.
+  quicktrans_latx_host_includes = include_directories(
+    '../../../linux-user', '../../../linux-user/x86_64',
+    '../../../linux-user/host/loongarch', '..', 'include',
+  )
   subdir('quicktrans/meson/latx')
 
   r = run_command(
