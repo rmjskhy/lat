@@ -27,11 +27,14 @@
 #endif
 
 #if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64)
-static bool latx_env_enabled(const char *name)
+static bool latx_env_enabled(const char *name, bool default_value)
 {
     const char *value = getenv(name);
 
-    return value && value[0] && strcmp(value, "0") &&
+    if (!value) {
+        return default_value;
+    }
+    return value[0] && strcmp(value, "0") &&
            strcasecmp(value, "false") && strcasecmp(value, "off");
 }
 
@@ -111,7 +114,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
                      int max_insns)
 {
 #if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64)
-    bool quicktrans_enabled = latx_env_enabled("LATX_FAST_TRANSLATOR");
+    bool quicktrans_enabled = latx_env_enabled("LATX_FAST_TRANSLATOR", true);
     bool quicktrans_fallback = false;
     QuickTransFailure quicktrans_failure;
 #endif
@@ -154,7 +157,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
             return code_size + search_size;
         }
         quicktrans_fallback = true;
-        if (latx_env_enabled("LATX_FAST_TRANSLATOR_STRICT")) {
+        if (latx_env_enabled("LATX_FAST_TRANSLATOR_STRICT", true)) {
             latx_quicktrans_report_failure(&quicktrans_failure, "not-run");
             abort();
         }
@@ -169,7 +172,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
     }
 #if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64)
     if (quicktrans_fallback &&
-        latx_env_enabled("LATX_FAST_TRANSLATOR_TRACE_MISSES")) {
+        latx_env_enabled("LATX_FAST_TRANSLATOR_TRACE_MISSES", false)) {
         latx_quicktrans_report_failure(&quicktrans_failure,
                                        tb->icount ? "accepted" : "rejected");
     }
