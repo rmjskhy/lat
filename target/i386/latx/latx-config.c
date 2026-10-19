@@ -38,6 +38,28 @@ static bool latx_env_enabled(const char *name, bool default_value)
            strcasecmp(value, "false") && strcasecmp(value, "off");
 }
 
+/* Host configuration is fixed before the first translated TB. */
+static unsigned int latx_quicktrans_options(void)
+{
+    static gsize options;
+
+    if (g_once_init_enter(&options)) {
+        gsize value = 8; /* Nonzero even when all options are disabled. */
+
+        if (latx_env_enabled("LATX_FAST_TRANSLATOR", true)) {
+            value |= 1;
+        }
+        if (latx_env_enabled("LATX_FAST_TRANSLATOR_STRICT", true)) {
+            value |= 2;
+        }
+        if (latx_env_enabled("LATX_FAST_TRANSLATOR_TRACE_MISSES", false)) {
+            value |= 4;
+        }
+        g_once_init_leave(&options, value);
+    }
+    return options;
+}
+
 static void latx_quicktrans_report_failure(const QuickTransFailure *failure,
                                            const char *old_decode)
 {
@@ -114,7 +136,8 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
                      int max_insns)
 {
 #if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64)
-    bool quicktrans_enabled = latx_env_enabled("LATX_FAST_TRANSLATOR", true);
+    unsigned int quicktrans_options = latx_quicktrans_options();
+    bool quicktrans_enabled = (quicktrans_options & 1) != 0;
     bool quicktrans_fallback = false;
     QuickTransFailure quicktrans_failure;
 #endif
@@ -157,7 +180,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
             return code_size + search_size;
         }
         quicktrans_fallback = true;
-        if (latx_env_enabled("LATX_FAST_TRANSLATOR_STRICT", true)) {
+        if ((quicktrans_options & 2)) {
             latx_quicktrans_report_failure(&quicktrans_failure, "not-run");
             abort();
         }
@@ -172,7 +195,7 @@ int target_latx_host(CPUArchState *env, struct TranslationBlock *tb,
     }
 #if defined(CONFIG_LATX_FAST_TRANSLATOR) && defined(TARGET_X86_64)
     if (quicktrans_fallback &&
-        latx_env_enabled("LATX_FAST_TRANSLATOR_TRACE_MISSES", false)) {
+        (quicktrans_options & 4)) {
         latx_quicktrans_report_failure(&quicktrans_failure,
                                        tb->icount ? "accepted" : "rejected");
     }
